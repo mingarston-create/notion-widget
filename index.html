@@ -51,301 +51,68 @@
       }
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      user-select: none;
-    }
 
-    body {
-      background: transparent;
-      padding: 4px 2px;
-      overflow: hidden;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: transparent; padding: 8px; color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     .dashboard-bar {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      max-width: 100%;
-      margin: 0 auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-      min-height: 98px;
+      --gap: 24px;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 24px; padding: var(--gap); min-height: 240px;
+      display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(190px, 1fr) minmax(180px, 1fr) minmax(560px, 3fr);
+      gap: var(--gap); align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,.035);
     }
-
-    .divider {
-      width: 1px;
-      height: 56px;
-      background: var(--divider);
-      flex-shrink: 0;
-    }
-
-    /* 1. WEATHER (Компактно и аккуратно) */
-    .weather-pod {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-    }
-
-    .weather-main {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .weather-icon {
-      font-size: 28px;
-      line-height: 1;
-    }
-
-    .weather-temp-wrap {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .weather-temp {
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      color: var(--text-main);
-    }
-
-    .weather-meta {
-      font-size: 10px;
-      color: var(--text-sub);
-      font-weight: 600;
-      white-space: nowrap;
-      margin-top: 2px;
-    }
-
-    .weather-forecast {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .forecast-card {
-      background: var(--pill-bg);
-      padding: 4px 6px;
-      border-radius: 6px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1px;
-      font-size: 9px;
-      font-weight: 600;
-      color: var(--text-sub);
-      min-width: 32px;
-    }
-
-    .forecast-card .f-temp {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    /* 2. CURRENCIES (Компактно) */
-    .currency-pod {
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
-    }
-
-    .curr-col {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .curr-row {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 10.5px;
-      line-height: 1.2;
-    }
-
-    .curr-code {
-      font-size: 9.5px;
-      font-weight: 700;
-      color: var(--text-sub);
-      width: 24px;
-    }
-
-    .curr-value {
-      font-size: 12.5px;
-      font-weight: 800;
-      color: var(--text-main);
-      min-width: 48px;
-    }
-
-    .curr-delta {
-      font-size: 9px;
-      font-weight: 700;
-      padding: 1px 4px;
-      border-radius: 3px;
-    }
-
+    .divider { display: none; }
+    .weather-pod, .year-pod, .curr-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .weather-main { display: flex; align-items: center; gap: 12px; }
+    .weather-icon { font-size: 40px; line-height: 1; }
+    .weather-temp { font-size: 32px; font-weight: 800; letter-spacing: -.04em; line-height: 1.1; }
+    .weather-meta { font-size: 14px; color: var(--text-sub); line-height: 1.5; margin-top: 8px; }
+    .weather-forecast { display: flex; gap: 8px; }
+    .forecast-card { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 8px; padding: 12px 8px; background: var(--pill-bg); border-radius: 12px; font-size: 14px; color: var(--text-sub); font-weight: 600; }
+    .f-temp { font-size: 18px; color: var(--text-main); font-weight: 700; }
+    .curr-row { display: grid; grid-template-columns: 32px minmax(0,1fr) auto; align-items: center; gap: 8px; }
+    .curr-code { font-size: 13px; font-weight: 700; color: var(--text-sub); }
+    .curr-value { font-size: 18px; font-weight: 750; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .curr-delta { font-size: 12px; font-weight: 700; border-radius: 6px; padding: 4px; white-space: nowrap; }
     .delta-up { color: var(--red); background: var(--red-bg); }
     .delta-down { color: var(--green); background: var(--green-bg); }
-
-    /* 3. YEAR PROGRESS */
-    .year-pod {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      flex-shrink: 0;
-    }
-
-    .year-top {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 6px;
-    }
-
-    .year-title {
-      font-size: 9.5px;
-      font-weight: 700;
-      color: var(--text-sub);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .year-left-chip {
-      font-size: 9px;
-      font-weight: 700;
-      color: var(--amber);
-      background: var(--amber-bg);
-      padding: 1px 5px;
-      border-radius: 4px;
-      white-space: nowrap;
-    }
-
-    .year-bar-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .year-pct-big {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--text-main);
-      line-height: 1;
-    }
-
-    .progress-track {
-      width: 55px;
-      height: 7px;
-      background: var(--bar-bg);
-      border-radius: 9999px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: var(--bar-fill);
-      border-radius: 9999px;
-      transition: width 1s ease-out;
-    }
-
-    /* 4. TASKS HERO POD (ГЛАВНАЯ ПЛИТКА - Высокая, просторная, солидная) */
-    .tasks-hero {
-      flex: 1;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-left: 6px;
-      height: 100%;
-    }
-
-    .task-hero-card {
-      background: var(--tile-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 13px;
-      padding: 8px 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.15s ease;
-      cursor: default;
-      min-width: 0;
-    }
-
-    .task-hero-card:hover {
-      transform: translateY(-2px);
-      background: var(--tile-hover);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      border-color: rgba(0,0,0,0.12);
-    }
-
-    .task-hero-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 4px;
-    }
-
-    .task-hero-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-sub);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .task-hero-badge {
-      font-size: 9px;
-      font-weight: 800;
-      padding: 1px 5px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      flex-shrink: 0;
-    }
-
-    .task-hero-num {
-      font-size: 24px;
-      font-weight: 800;
-      line-height: 1.1;
-      margin-top: 4px;
-      letter-spacing: -0.02em;
-    }
-
-    .task-hero-sub {
-      font-size: 9.5px;
-      font-weight: 600;
-      color: var(--text-sub);
-      margin-top: 2px;
-    }
-
-    .badge-burning { background: var(--red-bg); color: var(--red); }
+    .year-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
+    .year-title { font-size: 14px; font-weight: 700; color: var(--text-sub); letter-spacing: .04em; }
+    .year-left-chip { font-size: 12px; color: var(--text-sub); background: var(--pill-bg); border-radius: 6px; padding: 4px 8px; white-space: nowrap; }
+    .year-bar-row { display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
+    .year-pct-big { font-size: 32px; font-weight: 800; line-height: 1.1; letter-spacing: -.03em; }
+    .progress-track { width: 100%; height: 10px; border-radius: 999px; background: var(--bar-bg); overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--bar-fill); border-radius: inherit; transition: width 1s ease-out; }
+    .tasks-hero { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; min-width: 0; align-self: stretch; }
+    .task-hero-card { display: flex; flex-direction: column; justify-content: center; gap: 16px; min-width: 0; min-height: 192px; padding: 20px 16px; border: 1px solid var(--card-border); border-radius: 18px; background: var(--tile-bg); }
+    .task-hero-card:nth-child(1) { background: var(--red-bg); border-color: transparent; }
+    .task-hero-card:nth-child(2) { background: var(--blue-bg); border-color: transparent; }
+    .task-hero-card:nth-child(4) { background: var(--green-bg); border-color: transparent; }
+    .task-hero-header { min-height: 24px; }
+    .task-hero-label { font-size: 16px; font-weight: 650; line-height: 1.5; white-space: nowrap; }
+    .task-hero-badge { display: none; }
+    .task-hero-num { font-size: clamp(40px, 3.6vw, 64px); line-height: 1; font-weight: 800; letter-spacing: -.045em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .task-hero-sub { font-size: 14px; line-height: 1.5; color: var(--text-main); opacity: .75; }
     .num-burning { color: var(--red); }
-
-    .badge-progress { background: var(--blue-bg); color: var(--blue); }
     .num-progress { color: var(--blue); }
-
-    .badge-todo { background: var(--pill-bg); color: var(--text-sub); }
     .num-todo { color: var(--text-main); }
-
-    .badge-done { background: var(--green-bg); color: var(--green); }
     .num-done { color: var(--green); }
-
-    @media (max-width: 920px) {
-      .weather-forecast { display: none; }
-      .task-hero-badge { display: none; }
+    @media (max-width: 1279px) {
+      .dashboard-bar { grid-template-columns: repeat(3,minmax(0,1fr)); }
+      .tasks-hero { grid-column: 1 / -1; }
+      .task-hero-num { font-size: 56px; }
     }
+    @media (max-width: 679px) {
+      .dashboard-bar { --gap: 16px; grid-template-columns: minmax(0,1fr); border-radius: 20px; }
+      .tasks-hero { grid-row: 1; grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .task-hero-card { min-height: 176px; padding: 16px; }
+      .task-hero-num { font-size: 48px; }
+      .task-hero-label { font-size: 15px; }
+      .weather-pod, .currency-pod, .year-pod { padding-top: 16px; border-top: 1px solid var(--divider); }
+      .weather-forecast { max-width: 280px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .progress-fill { transition: none; } }
   </style>
 </head>
 <body>
@@ -439,8 +206,8 @@
           <span class="task-hero-label">✅ Готово</span>
           <span class="task-hero-badge badge-done">Успех</span>
         </div>
-        <div class="task-hero-num num-done" id="task-done">2%</div>
-        <div class="task-hero-sub" id="task-done-sub">3 закрыто</div>
+        <div class="task-hero-num num-done" id="task-done">3</div>
+        <div class="task-hero-sub" id="task-done-sub">2% выполнено</div>
       </div>
 
     </div>
@@ -459,8 +226,8 @@
     if (b) document.getElementById('task-burning').innerText = b;
     if (p) document.getElementById('task-progress').innerText = p;
     if (t) document.getElementById('task-todo').innerText = t;
-    if (pct) document.getElementById('task-done').innerText = pct + '%';
-    if (d) document.getElementById('task-done-sub').innerText = d + ' закрыто';
+    if (pct !== null) document.getElementById('task-done-sub').innerText = pct + '% выполнено';
+    if (d !== null) document.getElementById('task-done').innerText = d;
 
     // 1. WEATHER LOGIC (Open-Meteo API)
     const WMO = {
@@ -582,3 +349,4 @@
   </script>
 </body>
 </html>
+
