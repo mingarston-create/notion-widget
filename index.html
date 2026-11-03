@@ -144,7 +144,7 @@
       color: var(--text-main);
     }
 
-    /* 2. CURRENCIES POD (Без графика, только курсы и дельты) */
+    /* 2. CURRENCIES POD (Без графика) */
     .currency-pod {
       display: flex;
       align-items: center;
@@ -465,7 +465,7 @@
       }
     }
 
-    // 2. CURRENCIES (CBR API - только котировки без графика)
+    // 2. CURRENCIES (ЦБ РФ API - только курсы и дельты)
     async function loadCurrencies() {
       try {
         const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
@@ -518,7 +518,7 @@
     loadCurrencies();
     updateYear();
 
-    // Auto refresh every 10 min
+    // Автообновление каждые 10 мин
     setInterval(() => {
       loadWeather();
       loadCurrencies();
