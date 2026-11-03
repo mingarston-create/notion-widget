@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Task Dashboard Widget</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --card-bg: #ffffff;
+      --card-border: #e9e9e7;
+      --text-main: #37352f;
+      --text-sub: #787774;
+      --accent-burning: #e11d48;
+      --pill-burning-bg: #ffe4e6;
+      --pill-burning-text: #e11d48;
+      --accent-progress: #2563eb;
+      --pill-progress-bg: #dbeafe;
+      --pill-progress-text: #2563eb;
+      --pill-todo-bg: #f1f5f9;
+      --pill-todo-text: #64748b;
+      --accent-done: #059669;
+      --pill-done-bg: #d1fae5;
+      --pill-done-text: #059669;
+      --bar-bg: #ebebeb;
+      --banner-bg: #fafaf9;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #191919;
+        --card-bg: #202020;
+        --card-border: #2f2f2f;
+        --text-main: #ffffff;
+        --text-sub: #9b9b9b;
+        --pill-burning-bg: rgba(225, 29, 72, 0.2);
+        --pill-burning-text: #fb7185;
+        --pill-progress-bg: rgba(37, 99, 235, 0.2);
+        --pill-progress-text: #60a5fa;
+        --pill-todo-bg: rgba(148, 163, 184, 0.2);
+        --pill-todo-text: #cbd5e1;
+        --pill-done-bg: rgba(5, 150, 105, 0.2);
+        --pill-done-text: #34d399;
+        --bar-bg: #333333;
+        --banner-bg: #202020;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background: transparent;
+      padding: 10px;
+    }
+
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-sub);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 650px) {
+      .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+
+    .kpi-card.active {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-icon {
+      font-size: 20px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-burning { background: var(--pill-burning-bg); color: var(--pill-burning-text); }
+    .badge-progress { background: var(--pill-progress-bg); color: var(--pill-progress-text); }
+    .badge-todo { background: var(--pill-todo-bg); color: var(--pill-todo-text); }
+    .badge-done { background: var(--pill-done-bg); color: var(--pill-done-text); }
+
+    .card-middle {
+      margin-top: 12px;
+    }
+
+    .card-number {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .card-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      margin-top: 6px;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: var(--bar-bg);
+      border-radius: 9999px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #10b981;
+      border-radius: 9999px;
+      width: 2%;
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .footer-banner {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--banner-bg);
+      border: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #e11d48;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <div class="top-header">
+      <span>📊 Метрики задач</span>
+      <span style="font-size: 11px; font-weight: normal; opacity: 0.7;">кликни на карточку для подсказки</span>
+    </div>
+
+    <div class="cards-grid">
+      <!-- Card 1: Burning -->
+      <div id="card-burning" class="kpi-card" onclick="selectCard('burning')">
+        <div class="card-top">
+          <span class="card-icon">🔥</span>
+          <span class="badge badge-burning">Срочно</span>
+        </div>
+        <div class="card-middle">
+          <div id="val-burning" class="card-number">23</div>
+          <div class="card-label">Горящие сегодня</div>
+        </div>
+      </div>
+
+      <!-- Card 2: In Progress -->
+      <div id="card-progress" class="kpi-card" onclick="selectCard('progress')">
+        <div class="card-top">
+          <span class="card-icon">⚡</span>
+          <span class="badge badge-progress">Фокус</span>
+        </div>
+        <div class="card-middle">
+          <div id="val-progress" class="card-number">5</div>
+          <div class="card-label">В работе</div>
+        </div>
+      </div>
+
+      <!-- Card 3: Backlog / To Do -->
+      <div id="card-todo" class="kpi-card" onclick="selectCard('todo')">
+        <div class="card-top">
+          <span class="card-icon">📌</span>
+          <span class="badge badge-todo">Пул</span>
+        </div>
+        <div class="card-middle">
+          <div id="val-todo" class="card-number">115</div>
+          <div class="card-label">К выполнению</div>
+        </div>
+      </div>
+
+      <!-- Card 4: Progress -->
+      <div id="card-done" class="kpi-card" onclick="selectCard('done')">
+        <div class="card-top">
+          <span class="card-icon">✅</span>
+          <span id="badge-done" class="badge badge-done">3 закрыто</span>
+        </div>
+        <div class="card-middle">
+          <div class="progress-row">
+            <span id="val-percent" class="card-number">2%</span>
+            <span id="val-total" class="card-label" style="margin-top: 0;">из 123</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="val-bar" class="progress-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom info banner -->
+    <div class="footer-banner">
+      <div class="footer-left">
+        <span class="pulse-dot"></span>
+        <span id="footer-text">23 задачи требуют внимания (сегодня или просрочены).</span>
+      </div>
+      <span style="font-size: 11px; font-weight: 500; opacity: 0.8;">100% нативно</span>
+    </div>
+  </div>
+
+  <script>
+    const tips = {
+      burning: "23 задачи просрочены или назначены на сегодня (включая Level Group, симистор, Авито).",
+      progress: "5 задач прямо сейчас находятся в активной работе (текущий спринт).",
+      todo: "115 задач в общем пуле бэклога по всем направлениям.",
+      done: "3 задачи успешно закрыты. Прогресс составляет 2% от общего пула."
+    };
+
+    function selectCard(key) {
+      ['burning', 'progress', 'todo', 'done'].forEach(k => {
+        const el = document.getElementById('card-' + k);
+        if (k === key) el.classList.add('active');
+        else el.classList.remove('active');
+      });
+      document.getElementById('footer-text').innerText = tips[key];
+    }
+  </script>
+</body>
+</html>
