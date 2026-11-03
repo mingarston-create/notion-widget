@@ -53,28 +53,28 @@
 
     body {
       background: transparent;
-      padding: 4px 2px;
+      padding: 3px 1px;
       overflow: hidden;
     }
 
     .dashboard-bar {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 10px 18px;
+      border-radius: 14px;
+      padding: 8px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      max-width: 1400px;
+      gap: 10px;
+      max-width: 100%;
       margin: 0 auto;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-      min-height: 80px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+      min-height: 72px;
     }
 
     .divider {
       width: 1px;
-      height: 44px;
+      height: 38px;
       background: var(--divider);
       flex-shrink: 0;
     }
@@ -83,18 +83,18 @@
     .weather-pod {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       flex-shrink: 0;
     }
 
     .weather-main {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
     }
 
     .weather-icon {
-      font-size: 32px;
+      font-size: 26px;
       line-height: 1;
     }
 
@@ -104,7 +104,7 @@
     }
 
     .weather-temp {
-      font-size: 22px;
+      font-size: 19px;
       font-weight: 800;
       letter-spacing: -0.02em;
       line-height: 1.1;
@@ -112,39 +112,39 @@
     }
 
     .weather-meta {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-sub);
-      font-weight: 500;
+      font-weight: 600;
       white-space: nowrap;
     }
 
     .weather-forecast {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }
 
     .forecast-card {
       background: var(--pill-bg);
-      padding: 4px 8px;
-      border-radius: 7px;
+      padding: 3px 6px;
+      border-radius: 6px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
-      font-size: 10px;
+      gap: 1px;
+      font-size: 9px;
       font-weight: 600;
       color: var(--text-sub);
-      min-width: 42px;
+      min-width: 34px;
     }
 
     .forecast-card .f-temp {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       color: var(--text-main);
     }
 
-    /* 2. CURRENCIES POD (Без графика) */
+    /* 2. CURRENCIES POD */
     .currency-pod {
       display: flex;
       align-items: center;
@@ -154,36 +154,36 @@
     .curr-col {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
     }
 
     .curr-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 11px;
+      gap: 4px;
+      font-size: 10px;
       line-height: 1.2;
     }
 
     .curr-code {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       color: var(--text-sub);
-      width: 26px;
+      width: 22px;
     }
 
     .curr-value {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
       color: var(--text-main);
-      min-width: 52px;
+      min-width: 44px;
     }
 
     .curr-delta {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
-      padding: 1px 4px;
-      border-radius: 4px;
+      padding: 0px 3px;
+      border-radius: 3px;
     }
 
     .delta-up {
@@ -200,54 +200,51 @@
     .year-pod {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 3px;
       flex-shrink: 0;
-      min-width: 140px;
     }
 
     .year-top {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px;
     }
 
     .year-title {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       color: var(--text-sub);
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
     }
 
     .year-left-chip {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 600;
       color: var(--text-sub);
       background: var(--pill-bg);
-      padding: 2px 5px;
-      border-radius: 4px;
+      padding: 1px 4px;
+      border-radius: 3px;
       white-space: nowrap;
     }
 
     .year-bar-row {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .year-pct-big {
-      font-size: 19px;
+      font-size: 17px;
       font-weight: 800;
       color: var(--text-main);
       line-height: 1;
-      min-width: 46px;
     }
 
     .progress-track {
-      flex: 1;
-      min-width: 70px;
-      height: 8px;
+      width: 55px;
+      height: 7px;
       background: var(--bar-bg);
       border-radius: 9999px;
       overflow: hidden;
@@ -264,38 +261,38 @@
     .tasks-pod {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 5px;
       flex-shrink: 0;
     }
 
     .task-card {
       background: var(--pill-bg);
-      border-radius: 9px;
-      padding: 6px 10px;
+      border-radius: 8px;
+      padding: 4px 7px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
-      min-width: 52px;
+      gap: 1px;
+      min-width: 44px;
       transition: transform 0.15s ease;
     }
 
     .task-card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-1px);
     }
 
     .task-header {
-      font-size: 10px;
-      font-weight: 600;
+      font-size: 9px;
+      font-weight: 700;
       color: var(--text-sub);
       display: flex;
       align-items: center;
-      gap: 3px;
+      gap: 2px;
       white-space: nowrap;
     }
 
     .task-num {
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 800;
       line-height: 1.1;
     }
@@ -304,15 +301,6 @@
     .num-progress { color: var(--blue); }
     .num-todo { color: var(--text-main); }
     .num-done { color: var(--green); }
-
-    /* RESPONSIVE BREAKPOINTS */
-    @media (max-width: 1020px) {
-      .weather-forecast { display: none; }
-    }
-    @media (max-width: 780px) {
-      .currency-pod { display: none; }
-      .divider:nth-of-type(2) { display: none; }
-    }
   </style>
 </head>
 <body>
@@ -445,7 +433,7 @@
 
         const fc = document.getElementById('w-forecast');
         fc.innerHTML = '';
-        for (let i = 1; i <= 3; i++) {
+        for (let i = 1; i <= 2; i++) {
           const date = new Date(data.daily.time[i]);
           const day = DAYS[date.getDay()];
           const fCode = data.daily.weathercode[i];
@@ -465,7 +453,7 @@
       }
     }
 
-    // 2. CURRENCIES (ЦБ РФ API - только курсы и дельты)
+    // 2. CURRENCIES (ЦБ РФ API)
     async function loadCurrencies() {
       try {
         const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
@@ -518,7 +506,6 @@
     loadCurrencies();
     updateYear();
 
-    // Автообновление каждые 10 мин
     setInterval(() => {
       loadWeather();
       loadCurrencies();
