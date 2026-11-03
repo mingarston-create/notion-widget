@@ -144,7 +144,7 @@
       color: var(--text-main);
     }
 
-    /* 2. CURRENCIES POD (–С–µ–Ј –≥—А–∞—Д–Є–Ї–∞, —В–Њ–ї—М–Ї–Њ –Ї—Г—А—Б—Л –Є –і–µ–ї—М—В—Л) */
+    /* 2. CURRENCIES POD (Без графика, только курсы и дельты) */
     .currency-pod {
       display: flex;
       align-items: center;
@@ -321,10 +321,10 @@
     <!-- 1. WEATHER -->
     <div class="weather-pod">
       <div class="weather-main">
-        <div class="weather-icon" id="w-icon">вЫЕ</div>
+        <div class="weather-icon" id="w-icon">⛅</div>
         <div class="weather-temp-wrap">
-          <div class="weather-temp" id="w-temp">+2¬∞C</div>
-          <div class="weather-meta" id="w-desc">–Ь–Њ—Б–Ї–≤–∞ ¬Ј –Я–∞—Б–Љ—Г—А–љ–Њ</div>
+          <div class="weather-temp" id="w-temp">+2°C</div>
+          <div class="weather-meta" id="w-desc">Москва · Пасмурно</div>
         </div>
       </div>
       <div class="weather-forecast" id="w-forecast"></div>
@@ -332,22 +332,22 @@
 
     <div class="divider"></div>
 
-    <!-- 2. CURRENCIES (–С–µ–Ј –≥—А–∞—Д–Є–Ї–∞ USD 7 –Ф–Э–Х–Щ) -->
+    <!-- 2. CURRENCIES (Без графика USD 7 ДНЕЙ) -->
     <div class="currency-pod">
       <div class="curr-col">
         <div class="curr-row">
           <span class="curr-code">USD</span>
-          <span class="curr-value" id="usd-val">-- вВљ</span>
+          <span class="curr-value" id="usd-val">-- ₽</span>
           <span class="curr-delta" id="usd-delta"></span>
         </div>
         <div class="curr-row">
           <span class="curr-code">EUR</span>
-          <span class="curr-value" id="eur-val">-- вВљ</span>
+          <span class="curr-value" id="eur-val">-- ₽</span>
           <span class="curr-delta" id="eur-delta"></span>
         </div>
         <div class="curr-row">
           <span class="curr-code">CNY</span>
-          <span class="curr-value" id="cny-val">-- вВљ</span>
+          <span class="curr-value" id="cny-val">-- ₽</span>
           <span class="curr-delta" id="cny-delta"></span>
         </div>
       </div>
@@ -358,8 +358,8 @@
     <!-- 3. YEAR PROGRESS -->
     <div class="year-pod">
       <div class="year-top">
-        <span class="year-title" id="year-title">2026 –У–Ю–Ф</span>
-        <span class="year-left-chip" id="year-left">-- –і–љ. –Њ—Б—В.</span>
+        <span class="year-title" id="year-title">2026 ГОД</span>
+        <span class="year-left-chip" id="year-left">-- дн. ост.</span>
       </div>
       <div class="year-bar-row">
         <span class="year-pct-big" id="year-pct">--%</span>
@@ -373,20 +373,20 @@
 
     <!-- 4. TASKS KPI -->
     <div class="tasks-pod">
-      <div class="task-card" title="–°—А–Њ—З–љ—Л–µ / –њ—А–Њ—Б—А–Њ—З–µ–љ–љ—Л–µ –Ј–∞–і–∞—З–Є">
-        <div class="task-header">рЯФ• –°—А–Њ—З–љ–Њ</div>
+      <div class="task-card" title="Срочные / просроченные задачи">
+        <div class="task-header">🔥 Срочно</div>
         <div class="task-num num-burning" id="task-burning">24</div>
       </div>
-      <div class="task-card" title="–Ч–∞–і–∞—З–Є –≤ —А–∞–±–Њ—В–µ">
-        <div class="task-header">вЪ° –Т —А–∞–±–Њ—В–µ</div>
+      <div class="task-card" title="Задачи в работе">
+        <div class="task-header">⚡ В работе</div>
         <div class="task-num num-progress" id="task-progress">6</div>
       </div>
-      <div class="task-card" title="–Ъ —Б–і–∞—З–µ / –≤ –±—Н–Ї–ї–Њ–≥–µ">
-        <div class="task-header">рЯУМ –Я—Г–ї</div>
+      <div class="task-card" title="К сдаче / в бэклоге">
+        <div class="task-header">📌 Пул</div>
         <div class="task-num num-todo" id="task-todo">114</div>
       </div>
-      <div class="task-card" title="–Ч–∞–Ї—А—Л—В–Њ –Ј–∞–і–∞—З">
-        <div class="task-header">вЬЕ –У–Њ—В–Њ–≤–Њ</div>
+      <div class="task-card" title="Закрыто задач">
+        <div class="task-header">✅ Готово</div>
         <div class="task-num num-done" id="task-done">2%</div>
       </div>
     </div>
@@ -408,28 +408,28 @@
 
     // 1. WEATHER LOGIC (Open-Meteo API)
     const WMO = {
-      0: { icon: 'вШАпЄП', text: '–ѓ—Б–љ–Њ' },
-      1: { icon: 'рЯМ§пЄП', text: '–Я—А–µ–Є–Љ. —П—Б–љ–Њ' },
-      2: { icon: 'вЫЕ', text: '–Я–µ—А–µ–Љ–µ–љ–љ–∞—П' },
-      3: { icon: 'вШБпЄП', text: '–Я–∞—Б–Љ—Г—А–љ–Њ' },
-      45: { icon: 'рЯМЂпЄП', text: '–Ґ—Г–Љ–∞–љ' },
-      48: { icon: 'рЯМЂпЄП', text: '–Ш–Ј–Љ–Њ—А–Њ–Ј—М' },
-      51: { icon: 'рЯМ¶пЄП', text: '–Ь–Њ—А–Њ—Б—М' },
-      53: { icon: 'рЯМ¶пЄП', text: '–Ь–Њ—А–Њ—Б—М' },
-      55: { icon: 'рЯМІпЄП', text: '–Ь–Њ—А–Њ—Б—М' },
-      61: { icon: 'рЯМІпЄП', text: '–Ф–Њ–ґ–і—М' },
-      63: { icon: 'рЯМІпЄП', text: '–Ф–Њ–ґ–і—М' },
-      65: { icon: 'рЯМІпЄП', text: '–Ы–Є–≤–µ–љ—М' },
-      71: { icon: 'рЯМ®пЄП', text: '–°–љ–µ–≥' },
-      73: { icon: 'рЯМ®пЄП', text: '–°–љ–µ–≥' },
-      75: { icon: 'вЭДпЄП', text: '–°–љ–µ–≥–Њ–њ–∞–і' },
-      77: { icon: 'рЯМ®пЄП', text: '–Ъ—А—Г–њ–∞' },
-      80: { icon: 'рЯМ¶пЄП', text: '–Ы–Є–≤–љ–µ–≤—Л–є –і–Њ–ґ–і—М' },
-      81: { icon: 'рЯМІпЄП', text: '–°–Є–ї—М–љ—Л–є –і–Њ–ґ–і—М' },
-      85: { icon: 'рЯМ®пЄП', text: '–°–љ–µ–≥–Њ–њ–∞–і' },
-      95: { icon: 'вЫИпЄП', text: '–У—А–Њ–Ј–∞' }
+      0: { icon: '☀️', text: 'Ясно' },
+      1: { icon: '🌤️', text: 'Преим. ясно' },
+      2: { icon: '⛅', text: 'Переменная' },
+      3: { icon: '☁️', text: 'Пасмурно' },
+      45: { icon: '🌫️', text: 'Туман' },
+      48: { icon: '🌫️', text: 'Изморозь' },
+      51: { icon: '🌦️', text: 'Морось' },
+      53: { icon: '🌦️', text: 'Морось' },
+      55: { icon: '🌧️', text: 'Морось' },
+      61: { icon: '🌧️', text: 'Дождь' },
+      63: { icon: '🌧️', text: 'Дождь' },
+      65: { icon: '🌧️', text: 'Ливень' },
+      71: { icon: '🌨️', text: 'Снег' },
+      73: { icon: '🌨️', text: 'Снег' },
+      75: { icon: '❄️', text: 'Снегопад' },
+      77: { icon: '🌨️', text: 'Крупа' },
+      80: { icon: '🌦️', text: 'Ливневый дождь' },
+      81: { icon: '🌧️', text: 'Сильный дождь' },
+      85: { icon: '🌨️', text: 'Снегопад' },
+      95: { icon: '⛈️', text: 'Гроза' }
     };
-    const DAYS = ['–Т—Б', '–Я–љ', '–Т—В', '–°—А', '–І—В', '–Я—В', '–°–±'];
+    const DAYS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
     async function loadWeather() {
       try {
@@ -437,11 +437,11 @@
         const res = await fetch(url);
         const data = await res.json();
         const curr = data.current_weather;
-        const wInfo = WMO[curr.weathercode] || { icon: 'вЫЕ', text: '–Ю–±–ї–∞—З–љ–Њ' };
+        const wInfo = WMO[curr.weathercode] || { icon: '⛅', text: 'Облачно' };
 
-        document.getElementById('w-temp').innerText = (curr.temperature > 0 ? '+' : '') + Math.round(curr.temperature) + '¬∞C';
+        document.getElementById('w-temp').innerText = (curr.temperature > 0 ? '+' : '') + Math.round(curr.temperature) + '°C';
         document.getElementById('w-icon').innerText = wInfo.icon;
-        document.getElementById('w-desc').innerText = '–Ь–Њ—Б–Ї–≤–∞ ¬Ј ' + wInfo.text;
+        document.getElementById('w-desc').innerText = 'Москва · ' + wInfo.text;
 
         const fc = document.getElementById('w-forecast');
         fc.innerHTML = '';
@@ -449,14 +449,14 @@
           const date = new Date(data.daily.time[i]);
           const day = DAYS[date.getDay()];
           const fCode = data.daily.weathercode[i];
-          const icon = (WMO[fCode] && WMO[fCode].icon) || 'вЫЕ';
+          const icon = (WMO[fCode] && WMO[fCode].icon) || '⛅';
           const maxT = Math.round(data.daily.temperature_2m_max[i]);
 
           const card = document.createElement('div');
           card.className = 'forecast-card';
           card.innerHTML = `
             <span>${day} ${icon}</span>
-            <span class="f-temp">${maxT > 0 ? '+' : ''}${maxT}¬∞</span>
+            <span class="f-temp">${maxT > 0 ? '+' : ''}${maxT}°</span>
           `;
           fc.appendChild(card);
         }
@@ -465,7 +465,7 @@
       }
     }
 
-    // 2. CURRENCIES (CBR API - —В–Њ–ї—М–Ї–Њ –Ї–Њ—В–Є—А–Њ–≤–Ї–Є –±–µ–Ј –≥—А–∞—Д–Є–Ї–∞)
+    // 2. CURRENCIES (CBR API - только котировки без графика)
     async function loadCurrencies() {
       try {
         const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
@@ -475,12 +475,12 @@
         function setRate(code, valId, deltaId) {
           const item = v[code];
           if (!item) return;
-          document.getElementById(valId).innerText = item.Value.toFixed(2) + ' вВљ';
+          document.getElementById(valId).innerText = item.Value.toFixed(2) + ' ₽';
           if (deltaId) {
             const diff = (item.Value - item.Previous).toFixed(2);
             const isUp = diff >= 0;
             const el = document.getElementById(deltaId);
-            el.innerText = (isUp ? 'вЖС+' : 'вЖУ') + diff;
+            el.innerText = (isUp ? '↑+' : '↓') + diff;
             el.className = 'curr-delta ' + (isUp ? 'delta-up' : 'delta-down');
           }
         }
@@ -508,10 +508,10 @@
       const totalDays = Math.round(total / oneDay);
       const left = totalDays - day;
 
-      document.getElementById('year-title').innerText = year + ' –У–Ю–Ф';
+      document.getElementById('year-title').innerText = year + ' ГОД';
       document.getElementById('year-pct').innerText = pct + '%';
       document.getElementById('year-fill').style.width = pct + '%';
-      document.getElementById('year-left').innerText = left + ' –і–љ. –Њ—Б—В.';
+      document.getElementById('year-left').innerText = left + ' дн. ост.';
     }
 
     loadWeather();
