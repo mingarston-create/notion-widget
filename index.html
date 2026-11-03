@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion Dashboard Bar</title>
+  <title>Notion Task Dashboard</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -12,17 +12,19 @@
       --text-main: #37352f;
       --text-sub: #787774;
       --divider: #ebebeb;
-      --bar-bg: #e5e5e5;
+      --tile-bg: #fbfbfa;
+      --tile-hover: #f1f1ef;
+      --bar-bg: #ebebeb;
       --bar-fill: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
       --red: #e11d48;
       --red-bg: #ffe4e6;
-      --green: #10b981;
-      --green-bg: #d1fae5;
       --blue: #2563eb;
       --blue-bg: #dbeafe;
+      --green: #10b981;
+      --green-bg: #d1fae5;
+      --amber: #d97706;
+      --amber-bg: #fef3c7;
       --pill-bg: #f7f6f3;
-      --spark-color: #3b82f6;
-      --pod-bg: rgba(0,0,0,0.015);
     }
 
     @media (prefers-color-scheme: dark) {
@@ -33,17 +35,19 @@
         --text-main: #ffffff;
         --text-sub: #9b9b9b;
         --divider: #333333;
+        --tile-bg: #262626;
+        --tile-hover: #2f2f2f;
         --bar-bg: #333333;
         --bar-fill: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
         --red: #f43f5e;
         --red-bg: #4c1d24;
-        --green: #34d399;
-        --green-bg: #133e2c;
         --blue: #60a5fa;
         --blue-bg: #1e3a5f;
+        --green: #34d399;
+        --green-bg: #133e2c;
+        --amber: #fbbf24;
+        --amber-bg: #451a03;
         --pill-bg: #2a2a2a;
-        --spark-color: #60a5fa;
-        --pod-bg: rgba(255,255,255,0.02);
       }
     }
 
@@ -61,529 +65,480 @@
       overflow: hidden;
     }
 
-    .dashboard-bar {
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 1.15fr 1.25fr 1.6fr;
+      gap: 14px;
+      max-width: 1400px;
+      margin: 0 auto;
+      min-height: 140px;
+    }
+
+    .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 12px 20px;
+      border-radius: 18px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      transition: all 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.12);
+    }
+
+    .card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      max-width: 1400px;
-      margin: 0 auto;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-      min-height: 84px;
+      gap: 8px;
+      margin-bottom: 6px;
     }
 
-    .divider {
-      width: 1px;
-      height: 48px;
-      background: var(--divider);
-      flex-shrink: 0;
-    }
-
-    /* 1. WEATHER POD */
-    .weather-pod {
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-sub);
       display: flex;
       align-items: center;
-      gap: 14px;
-      flex-shrink: 0;
+      gap: 5px;
     }
 
+    /* 1. WEATHER CARD */
     .weather-main {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      margin: 4px 0;
     }
 
     .weather-icon {
-      font-size: 32px;
+      font-size: 38px;
       line-height: 1;
-    }
-
-    .weather-temp-wrap {
-      display: flex;
-      flex-direction: column;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
     }
 
     .weather-temp {
-      font-size: 24px;
+      font-size: 32px;
       font-weight: 800;
+      line-height: 1;
+      color: var(--text-main);
       letter-spacing: -0.02em;
-      line-height: 1.1;
-      color: var(--text-main);
     }
 
-    .weather-meta {
+    .weather-desc {
       font-size: 11px;
-      color: var(--text-sub);
-      font-weight: 500;
-    }
-
-    .weather-forecast {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .forecast-card {
-      background: var(--pill-bg);
-      padding: 5px 9px;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      font-size: 10px;
       font-weight: 600;
       color: var(--text-sub);
-      min-width: 44px;
+      margin-top: 3px;
     }
 
-    .forecast-card .f-temp {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    /* 2. CURRENCIES POD */
-    .currency-pod {
+    .forecast-row {
       display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-shrink: 0;
+      gap: 6px;
+      margin-top: 8px;
     }
 
-    .curr-col {
+    .forecast-pill {
+      flex: 1;
+      background: var(--pill-bg);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 6px 8px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-    }
-
-    .curr-row {
-      display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
-    }
-
-    .curr-code {
+      gap: 3px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--text-sub);
-      width: 28px;
+      transition: all 0.15s ease;
     }
 
-    .curr-value {
-      font-size: 14px;
+    .forecast-pill:hover {
+      background: var(--tile-hover);
+      border-color: var(--card-border);
+      transform: translateY(-1px);
+    }
+
+    .forecast-temp {
+      font-size: 12px;
       font-weight: 800;
       color: var(--text-main);
     }
 
-    .curr-delta {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 5px;
-    }
-
-    .delta-up {
-      color: var(--red);
-      background: var(--red-bg);
-    }
-
-    .delta-down {
-      color: var(--green);
-      background: var(--green-bg);
-    }
-
-    .sparkline-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .sparkline-svg {
-      width: 64px;
-      height: 28px;
-      overflow: visible;
-    }
-
-    .spark-line {
-      fill: none;
-      stroke: var(--spark-color);
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .spark-dot {
-      fill: var(--spark-color);
-    }
-
-    .spark-label {
-      font-size: 9px;
-      font-weight: 600;
-      color: var(--text-sub);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    /* 3. YEAR PROGRESS POD */
-    .year-pod {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .year-top {
+    /* 2. TIMELINE CARD */
+    .timeline-stat {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      gap: 8px;
+      margin: 4px 0;
     }
 
-    .year-title {
+    .timeline-pct {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .timeline-badge {
       font-size: 11px;
       font-weight: 700;
-      color: var(--text-sub);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
+      color: var(--amber);
+      background: var(--amber-bg);
+      padding: 3px 8px;
+      border-radius: 6px;
     }
 
-    .year-left-chip {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text-sub);
-      background: var(--pill-bg);
-      padding: 2px 6px;
-      border-radius: 4px;
+    .progress-bar-wrap {
+      margin: 8px 0;
     }
 
-    .year-bar-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .year-pct-big {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--text-main);
-      line-height: 1;
-    }
-
-    .progress-track {
-      width: 90px;
-      height: 8px;
+    .progress-bar {
+      width: 100%;
+      height: 10px;
       background: var(--bar-bg);
-      border-radius: 9999px;
+      border-radius: 999px;
       overflow: hidden;
     }
 
     .progress-fill {
       height: 100%;
       background: var(--bar-fill);
-      border-radius: 9999px;
-      transition: width 1s ease-out;
+      border-radius: 999px;
+      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* 4. TASKS POD */
-    .tasks-pod {
+    .month-subtrack {
       display: flex;
       align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sub);
+      padding-top: 4px;
+      border-top: 1px dashed var(--divider);
+      margin-top: 4px;
     }
 
-    .task-card {
-      background: var(--pill-bg);
-      border-radius: 10px;
-      padding: 8px 12px;
+    .month-bar {
+      width: 70px;
+      height: 5px;
+      background: var(--bar-bg);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .month-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 999px;
+    }
+
+    /* 3. TASKS METRICS CARD */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 6px;
+      height: 100%;
+    }
+
+    .kpi-tile {
+      background: var(--tile-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      min-width: 54px;
-      transition: transform 0.15s ease;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      cursor: default;
     }
 
-    .task-card:hover {
+    .kpi-tile:hover {
       transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+      background: var(--tile-hover);
     }
 
-    .task-header {
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+    }
+
+    .kpi-badge {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .kpi-num {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-top: 4px;
+    }
+
+    .kpi-sub {
       font-size: 10px;
       font-weight: 600;
       color: var(--text-sub);
-      display: flex;
-      align-items: center;
-      gap: 3px;
-    }
-
-    .task-num {
-      font-size: 18px;
-      font-weight: 800;
-      line-height: 1.1;
+      margin-top: 2px;
     }
 
     .num-burning { color: var(--red); }
-    .num-progress { color: var(--blue); }
-    .num-todo { color: var(--text-main); }
-    .num-done { color: var(--green); }
+    .badge-burning { background: var(--red-bg); color: var(--red); }
 
-    /* RESPONSIVE BREAKPOINTS */
-    @media (max-width: 1060px) {
-      .weather-forecast { display: none; }
-    }
-    @media (max-width: 880px) {
-      .sparkline-box { display: none; }
-      .progress-track { width: 60px; }
-    }
-    @media (max-width: 740px) {
-      .tasks-pod { display: none; }
+    .num-progress { color: var(--blue); }
+    .badge-progress { background: var(--blue-bg); color: var(--blue); }
+
+    .num-todo { color: var(--text-main); }
+    .badge-todo { background: var(--pill-bg); color: var(--text-sub); }
+
+    .num-done { color: var(--green); }
+    .badge-done { background: var(--green-bg); color: var(--green); }
+
+    @media (max-width: 960px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        min-height: auto;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="dashboard-bar">
+  <div class="dashboard-container">
 
-    <!-- 1. WEATHER -->
-    <div class="weather-pod">
+    <!-- CARD 1: WEATHER -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">вЫЕ –Я–Њ–≥–Њ–і–∞ –≤ –Ь–Њ—Б–Ї–≤–µ</span>
+        <span style="font-size: 10px; font-weight: 700; color: var(--text-sub);">Open-Meteo</span>
+      </div>
       <div class="weather-main">
-        <div class="weather-icon" id="w-icon">⛅</div>
-        <div class="weather-temp-wrap">
-          <div class="weather-temp" id="w-temp">+2°C</div>
-          <div class="weather-meta" id="w-desc">Москва · Пасмурно</div>
+        <div class="weather-icon" id="w-icon">вЫЕ</div>
+        <div>
+          <div class="weather-temp" id="w-temp">+2¬∞C</div>
+          <div class="weather-desc" id="w-desc">–Ь–Њ—Б–Ї–≤–∞ ¬Ј –Я–∞—Б–Љ—Г—А–љ–Њ</div>
         </div>
       </div>
-      <div class="weather-forecast" id="w-forecast"></div>
+      <div class="forecast-row" id="forecast-container"></div>
     </div>
 
-    <div class="divider"></div>
-
-    <!-- 2. CURRENCIES -->
-    <div class="currency-pod">
-      <div class="curr-col">
-        <div class="curr-row">
-          <span class="curr-code">USD</span>
-          <span class="curr-value" id="usd-val">-- ₽</span>
-          <span class="curr-delta" id="usd-delta"></span>
+    <!-- CARD 2: TIMELINE 2026 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" id="timeline-title">вП≥ –Ґ–∞–є–Љ–ї–∞–є–љ 2026</span>
+        <span class="timeline-badge" id="timeline-badge">-- –і–љ–µ–є –Њ—Б—В.</span>
+      </div>
+      <div>
+        <div class="timeline-stat">
+          <span class="timeline-pct" id="year-pct">--%</span>
+          <span style="font-size: 12px; font-weight: 600; color: var(--text-sub);" id="year-days-info">–і–µ–љ—М -- –Є–Ј --</span>
         </div>
-        <div class="curr-row">
-          <span class="curr-code">EUR</span>
-          <span class="curr-value" id="eur-val">-- ₽</span>
-          <span class="curr-delta" id="eur-delta"></span>
-        </div>
-        <div class="curr-row">
-          <span class="curr-code">CNY</span>
-          <span class="curr-value" id="cny-val">-- ₽</span>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar">
+            <div class="progress-fill" id="year-fill" style="width: 0%;"></div>
+          </div>
         </div>
       </div>
-      <div class="sparkline-box">
-        <svg class="sparkline-svg" id="usd-spark" viewBox="0 0 64 28"></svg>
-        <span class="sparkline-label">USD 7 ДНЕЙ</span>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- 3. YEAR PROGRESS -->
-    <div class="year-pod">
-      <div class="year-top">
-        <span class="year-title" id="year-title">2026 ГОД</span>
-        <span class="year-left-chip" id="year-left">-- дн. ост.</span>
-      </div>
-      <div class="year-bar-row">
-        <span class="year-pct-big" id="year-pct">--%</span>
-        <div class="progress-track">
-          <div class="progress-fill" id="year-fill" style="width: 0%;"></div>
+      <div class="month-subtrack">
+        <span id="month-name">–Э–Њ—П–±—А—М ¬Ј 4 –Є–Ј 30 –і–љ–µ–є</span>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <div class="month-bar">
+            <div class="month-fill" id="month-fill" style="width: 13%;"></div>
+          </div>
+          <span id="month-pct" style="font-weight: 700;">13%</span>
         </div>
       </div>
     </div>
 
-    <div class="divider"></div>
+    <!-- CARD 3: TASK KPI TILES -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">рЯОѓ –Я—Г–ї—М—Б –Ј–∞–і–∞—З</span>
+        <span style="font-size: 10px; font-weight: 700; color: var(--text-sub);" id="tasks-total-badge">123 –Ј–∞–і–∞—З–Є</span>
+      </div>
+      <div class="kpi-grid">
+        
+        <div class="kpi-tile" title="–Ч–∞–і–∞—З–Є –љ–∞ —Б–µ–≥–Њ–і–љ—П –Є –њ—А–Њ—Б—А–Њ—З–µ–љ–љ—Л–µ">
+          <div class="kpi-header">
+            <span>рЯФ• –°—А–Њ—З–љ–Њ</span>
+            <span class="kpi-badge badge-burning">–Ф–µ–і–ї–∞–є–љ</span>
+          </div>
+          <div class="kpi-num num-burning" id="task-burning">24</div>
+          <div class="kpi-sub">–њ—А–Њ—Б—А–Њ—З–µ–љ–Њ</div>
+        </div>
 
-    <!-- 4. TASKS KPI -->
-    <div class="tasks-pod">
-      <div class="task-card" title="Горящие задачи">
-        <div class="task-header">🔥 Срочно</div>
-        <div class="task-num num-burning" id="task-burning">23</div>
-      </div>
-      <div class="task-card" title="Задачи в фокусе">
-        <div class="task-header">⚡ В работе</div>
-        <div class="task-num num-progress" id="task-progress">5</div>
-      </div>
-      <div class="task-card" title="К выполнению">
-        <div class="task-header">📌 Пул</div>
-        <div class="task-num num-todo" id="task-todo">115</div>
-      </div>
-      <div class="task-card" title="Закрыто задач">
-        <div class="task-header">✅ Готово</div>
-        <div class="task-num num-done" id="task-done">2%</div>
+        <div class="kpi-tile" title="–Ч–∞–і–∞—З–Є –≤ —В–µ–Ї—Г—Й–µ–є —А–∞–±–Њ—В–µ">
+          <div class="kpi-header">
+            <span>вЪ° –Т —А–∞–±–Њ—В–µ</span>
+            <span class="kpi-badge badge-progress">–§–Њ–Ї—Г—Б</span>
+          </div>
+          <div class="kpi-num num-progress" id="task-progress">6</div>
+          <div class="kpi-sub">–≤ –њ—А–Њ—Ж–µ—Б—Б–µ</div>
+        </div>
+
+        <div class="kpi-tile" title="–Ч–∞–і–∞—З–Є –≤ –Њ—З–µ—А–µ–і–Є">
+          <div class="kpi-header">
+            <span>рЯУМ –Ъ —Б–і–∞—З–µ</span>
+            <span class="kpi-badge badge-todo">–Я—Г–ї</span>
+          </div>
+          <div class="kpi-num num-todo" id="task-todo">114</div>
+          <div class="kpi-sub">–≤ –±—Н–Ї–ї–Њ–≥–µ</div>
+        </div>
+
+        <div class="kpi-tile" title="–Т—Л–њ–Њ–ї–љ–µ–љ–љ—Л–µ –Ј–∞–і–∞—З–Є">
+          <div class="kpi-header">
+            <span>вЬЕ –У–Њ—В–Њ–≤–Њ</span>
+            <span class="kpi-badge badge-done">–£—Б–њ–µ—Е</span>
+          </div>
+          <div class="kpi-num num-done" id="task-done">2%</div>
+          <div class="kpi-sub" id="task-done-sub">3 –Ј–∞–Ї—А—Л—В–Њ</div>
+        </div>
+
       </div>
     </div>
 
   </div>
 
   <script>
-    // 1. Weather Logic (Open-Meteo API)
+    // 0. READ URL PARAMS FOR REAL-TIME TASK METRICS
+    const params = new URLSearchParams(window.location.search);
+    const b = params.get('b');
+    const p = params.get('p');
+    const t = params.get('t');
+    const d = params.get('d');
+    const tot = params.get('tot');
+    const pct = params.get('pct');
+
+    if (b) document.getElementById('task-burning').innerText = b;
+    if (p) document.getElementById('task-progress').innerText = p;
+    if (t) document.getElementById('task-todo').innerText = t;
+    if (pct) document.getElementById('task-done').innerText = pct + '%';
+    if (d) document.getElementById('task-done-sub').innerText = d + ' –Ј–∞–Ї—А—Л—В–Њ';
+    if (tot) document.getElementById('tasks-total-badge').innerText = tot + ' –Ј–∞–і–∞—З–Є';
+
+    // 1. WEATHER LOGIC (Open-Meteo API)
     const WMO = {
-      0: { icon: '☀️', text: 'Ясно' },
-      1: { icon: '🌤️', text: 'Преим. ясно' },
-      2: { icon: '⛅', text: 'Переменная' },
-      3: { icon: '☁️', text: 'Пасмурно' },
-      45: { icon: '🌫️', text: 'Туман' },
-      48: { icon: '🌫️', text: 'Изморозь' },
-      51: { icon: '🌦️', text: 'Морось' },
-      53: { icon: '🌦️', text: 'Морось' },
-      55: { icon: '🌧️', text: 'Морось' },
-      61: { icon: '🌧️', text: 'Дождь' },
-      63: { icon: '🌧️', text: 'Дождь' },
-      65: { icon: '🌧️', text: 'Ливень' },
-      71: { icon: '🌨️', text: 'Снег' },
-      73: { icon: '🌨️', text: 'Снег' },
-      75: { icon: '❄️', text: 'Снегопад' },
-      77: { icon: '🌨️', text: 'Снежная крупа' },
-      80: { icon: '🌦️', text: 'Ливневый дождь' },
-      81: { icon: '🌧️', text: 'Сильный дождь' },
-      85: { icon: '🌨️', text: 'Снегопад' },
-      95: { icon: '⛈️', text: 'Гроза' }
+      0: { icon: 'вШАпЄП', text: '–ѓ—Б–љ–Њ' },
+      1: { icon: 'рЯМ§пЄП', text: '–Я—А–µ–Є–Љ. —П—Б–љ–Њ' },
+      2: { icon: 'вЫЕ', text: '–Я–µ—А–µ–Љ–µ–љ–љ–∞—П' },
+      3: { icon: 'вШБпЄП', text: '–Я–∞—Б–Љ—Г—А–љ–Њ' },
+      45: { icon: 'рЯМЂпЄП', text: '–Ґ—Г–Љ–∞–љ' },
+      48: { icon: 'рЯМЂпЄП', text: '–Ш–Ј–Љ–Њ—А–Њ–Ј—М' },
+      51: { icon: 'рЯМ¶пЄП', text: '–Ь–Њ—А–Њ—Б—М' },
+      53: { icon: 'рЯМ¶пЄП', text: '–Ь–Њ—А–Њ—Б—М' },
+      55: { icon: 'рЯМІпЄП', text: '–Ь–Њ—А–Њ—Б—М' },
+      61: { icon: 'рЯМІпЄП', text: '–Ф–Њ–ґ–і—М' },
+      63: { icon: 'рЯМІпЄП', text: '–Ф–Њ–ґ–і—М' },
+      65: { icon: 'рЯМІпЄП', text: '–Ы–Є–≤–µ–љ—М' },
+      71: { icon: 'рЯМ®пЄП', text: '–°–љ–µ–≥' },
+      73: { icon: 'рЯМ®пЄП', text: '–°–љ–µ–≥' },
+      75: { icon: 'вЭДпЄП', text: '–°–љ–µ–≥–Њ–њ–∞–і' },
+      77: { icon: 'рЯМ®пЄП', text: '–Ъ—А—Г–њ–∞' },
+      80: { icon: 'рЯМ¶пЄП', text: '–Ы–Є–≤–љ–µ–≤—Л–є –і–Њ–ґ–і—М' },
+      81: { icon: 'рЯМІпЄП', text: '–°–Є–ї—М–љ—Л–є –і–Њ–ґ–і—М' },
+      85: { icon: 'рЯМ®пЄП', text: '–°–љ–µ–≥–Њ–њ–∞–і' },
+      95: { icon: 'вЫИпЄП', text: '–У—А–Њ–Ј–∞' }
     };
-    const DAYS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const DAYS = ['–Т—Б', '–Я–љ', '–Т—В', '–°—А', '–І—В', '–Я—В', '–°–±'];
+    const MONTHS = ['–ѓ–љ–≤–∞—А—М', '–§–µ–≤—А–∞–ї—М', '–Ь–∞—А—В', '–Р–њ—А–µ–ї—М', '–Ь–∞–є', '–Ш—О–љ—М', '–Ш—О–ї—М', '–Р–≤–≥—Г—Б—В', '–°–µ–љ—В—П–±—А—М', '–Ю–Ї—В—П–±—А—М', '–Э–Њ—П–±—А—М', '–Ф–µ–Ї–∞–±—А—М'];
 
     async function loadWeather() {
       try {
         const url = 'https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe%2FMoscow';
         const res = await fetch(url);
-        const d = await res.json();
-        const curr = d.current_weather;
-        const wInfo = WMO[curr.weathercode] || { icon: '⛅', text: 'Облачно' };
+        const data = await res.json();
+        const curr = data.current_weather;
+        const wInfo = WMO[curr.weathercode] || { icon: 'вЫЕ', text: '–Ю–±–ї–∞—З–љ–Њ' };
 
-        document.getElementById('w-temp').innerText = (curr.temperature > 0 ? '+' : '') + Math.round(curr.temperature) + '°C';
+        document.getElementById('w-temp').innerText = (curr.temperature > 0 ? '+' : '') + Math.round(curr.temperature) + '¬∞C';
         document.getElementById('w-icon').innerText = wInfo.icon;
-        document.getElementById('w-desc').innerText = 'Москва · ' + wInfo.text;
+        document.getElementById('w-desc').innerText = '–Ь–Њ—Б–Ї–≤–∞ ¬Ј ' + wInfo.text;
 
-        const fc = document.getElementById('w-forecast');
-        fc.innerHTML = '';
+        const container = document.getElementById('forecast-container');
+        container.innerHTML = '';
         for (let i = 1; i <= 3; i++) {
-          const date = new Date(d.daily.time[i]);
-          const day = DAYS[date.getDay()];
-          const fCode = d.daily.weathercode[i];
-          const icon = (WMO[fCode] && WMO[fCode].icon) || '⛅';
-          const maxT = Math.round(d.daily.temperature_2m_max[i]);
+          const date = new Date(data.daily.time[i]);
+          const dayName = DAYS[date.getDay()];
+          const fCode = data.daily.weathercode[i];
+          const icon = (WMO[fCode] && WMO[fCode].icon) || 'вЫЕ';
+          const maxT = Math.round(data.daily.temperature_2m_max[i]);
 
-          const card = document.createElement('div');
-          card.className = 'forecast-card';
-          card.innerHTML = `
-            <span>${day} ${icon}</span>
-            <span class="f-temp">${maxT > 0 ? '+' : ''}${maxT}°</span>
+          const pill = document.createElement('div');
+          pill.className = 'forecast-pill';
+          pill.innerHTML = `
+            <span>${dayName} ${icon}</span>
+            <span class="forecast-temp">${maxT > 0 ? '+' : ''}${maxT}¬∞</span>
           `;
-          fc.appendChild(card);
+          container.appendChild(pill);
         }
       } catch (e) {
         console.error('Weather error:', e);
       }
     }
 
-    // 2. Currencies (CBR API) + 7-day sparkline
-    async function loadCurrencies() {
-      try {
-        const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
-        const data = await res.json();
-        const v = data.Valute;
-
-        function setRate(code, valId, deltaId) {
-          const item = v[code];
-          if (!item) return;
-          document.getElementById(valId).innerText = item.Value.toFixed(2) + ' ₽';
-          if (deltaId) {
-            const diff = (item.Value - item.Previous).toFixed(2);
-            const isUp = diff >= 0;
-            const el = document.getElementById(deltaId);
-            el.innerText = (isUp ? '↑+' : '↓') + diff;
-            el.className = 'curr-delta ' + (isUp ? 'delta-up' : 'delta-down');
-          }
-        }
-        setRate('USD', 'usd-val', 'usd-delta');
-        setRate('EUR', 'eur-val', 'eur-delta');
-        setRate('CNY', 'cny-val', null);
-
-        // USD 7-day trend
-        const base = v.USD.Previous;
-        const cur = v.USD.Value;
-        const diff = cur - base;
-        const pts = [
-          base - diff * 0.45,
-          base - diff * 0.1,
-          base + diff * 0.25,
-          base - diff * 0.05,
-          base + diff * 0.35,
-          base,
-          cur
-        ];
-        drawSparkline(pts);
-      } catch (e) {
-        console.error('Currencies error:', e);
-      }
-    }
-
-    function drawSparkline(pts) {
-      const min = Math.min(...pts);
-      const max = Math.max(...pts);
-      const range = (max - min) || 1;
-      const w = 64, h = 28, pad = 3;
-
-      const coords = pts.map((val, idx) => {
-        const x = (idx / (pts.length - 1)) * (w - pad * 2) + pad;
-        const y = h - pad - ((val - min) / range) * (h - pad * 2);
-        return { x: x.toFixed(1), y: y.toFixed(1) };
-      });
-
-      const d = coords.map((c, i) => (i === 0 ? `M ${c.x} ${c.y}` : `L ${c.x} ${c.y}`)).join(' ');
-      const last = coords[coords.length - 1];
-
-      const svg = document.getElementById('usd-spark');
-      svg.innerHTML = `
-        <path d="${d}" class="spark-line" />
-        <circle cx="${last.x}" cy="${last.y}" r="3" class="spark-dot" />
-      `;
-    }
-
-    // 3. Dynamic Year Progress (Auto switches year)
-    function updateYear() {
+    // 2. TIMELINE LOGIC (Dynamic Year & Month Progress)
+    function updateTimeline() {
       const now = new Date();
       const year = now.getFullYear();
-      const start = new Date(year, 0, 1);
-      const end = new Date(year + 1, 0, 1);
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year + 1, 0, 1);
 
-      const elapsed = now - start;
-      const total = end - start;
-      const pct = (elapsed / total * 100).toFixed(1);
+      const elapsed = now - startOfYear;
+      const total = endOfYear - startOfYear;
+      const yearPct = (elapsed / total * 100).toFixed(1);
 
       const oneDay = 1000 * 60 * 60 * 24;
-      const day = Math.floor(elapsed / oneDay) + 1;
-      const totalDays = Math.round(total / oneDay);
-      const left = totalDays - day;
+      const currentDayOfYear = Math.floor(elapsed / oneDay) + 1;
+      const totalDaysInYear = Math.round(total / oneDay);
+      const daysLeft = totalDaysInYear - currentDayOfYear;
 
-      document.getElementById('year-title').innerText = year + ' ГОД';
-      document.getElementById('year-pct').innerText = pct + '%';
-      document.getElementById('year-fill').style.width = pct + '%';
-      document.getElementById('year-left').innerText = left + ' дн. ост.';
+      document.getElementById('timeline-title').innerText = 'вП≥ –Ґ–∞–є–Љ–ї–∞–є–љ ' + year;
+      document.getElementById('year-pct').innerText = yearPct + '%';
+      document.getElementById('year-days-info').innerText = '–і–µ–љ—М ' + currentDayOfYear + ' –Є–Ј ' + totalDaysInYear;
+      document.getElementById('year-fill').style.width = yearPct + '%';
+      document.getElementById('timeline-badge').innerText = daysLeft + ' –і–љ. –Њ—Б—В.';
+
+      // Month Progress
+      const monthIdx = now.getMonth();
+      const monthName = MONTHS[monthIdx];
+      const startOfMonth = new Date(year, monthIdx, 1);
+      const endOfMonth = new Date(year, monthIdx + 1, 1);
+      const daysInMonth = Math.round((endOfMonth - startOfMonth) / oneDay);
+      const currentDayOfMonth = now.getDate();
+      const monthPct = Math.round((currentDayOfMonth / daysInMonth) * 100);
+
+      document.getElementById('month-name').innerText = monthName + ' ¬Ј ' + currentDayOfMonth + ' –Є–Ј ' + daysInMonth + ' –і–љ.';
+      document.getElementById('month-fill').style.width = monthPct + '%';
+      document.getElementById('month-pct').innerText = monthPct + '%';
     }
 
     loadWeather();
-    loadCurrencies();
-    updateYear();
+    updateTimeline();
 
     // Auto refresh every 10 min
     setInterval(() => {
       loadWeather();
-      loadCurrencies();
-      updateYear();
+      updateTimeline();
     }, 600000);
   </script>
 </body>
