@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Books Dashboard</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --card-bg: #ffffff;
+      --card-border: #e9e9e7;
+      --text-main: #37352f;
+      --text-sub: #787774;
+      --divider: #ebebeb;
+      --bar-bg: #ececeb;
+      --bar-fill: linear-gradient(90deg, #f59e0b, #ef4444, #ec4899);
+      --pill-bg: #f7f6f3;
+      --accent: #2563eb;
+      --accent-gold: #d97706;
+      --accent-gold-bg: #fef3c7;
+      --success: #10b981;
+      --success-bg: #d1fae5;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #191919;
+        --card-bg: #202020;
+        --card-border: #2f2f2f;
+        --text-main: #ffffff;
+        --text-sub: #9b9b9b;
+        --divider: #333333;
+        --bar-bg: #333333;
+        --bar-fill: linear-gradient(90deg, #fbbf24, #f87171, #f472b6);
+        --pill-bg: #2a2a2a;
+        --accent: #60a5fa;
+        --accent-gold: #fbbf24;
+        --accent-gold-bg: #451a03;
+        --success: #34d399;
+        --success-bg: #064e3b;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background: transparent;
+      padding: 6px 4px;
+      overflow: hidden;
+    }
+
+    .books-bar {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px 20px;
+      display: grid;
+      grid-template-columns: 1.15fr 1.6fr 1.1fr;
+      gap: 16px;
+      max-width: 1400px;
+      margin: 0 auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      min-height: 94px;
+      align-items: center;
+    }
+
+    .pod {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .pod-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .pod-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* 1. READING CHALLENGE */
+    .challenge-stat {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .stat-main {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1;
+    }
+
+    .stat-target {
+      font-size: 13px;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    .challenge-badge {
+      background: var(--accent-gold-bg);
+      color: var(--accent-gold);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 5px;
+    }
+
+    .track {
+      width: 100%;
+      height: 8px;
+      background: var(--bar-bg);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .track-fill {
+      height: 100%;
+      background: var(--bar-fill);
+      border-radius: 999px;
+      transition: width 0.6s ease;
+    }
+
+    .challenge-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    .challenge-ctrls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ctrl-btn {
+      background: var(--pill-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 4px;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 11px;
+      transition: background 0.15s;
+    }
+
+    .ctrl-btn:hover {
+      background: var(--divider);
+    }
+
+    /* 2. INSIGHT POD */
+    .insight-pod {
+      border-left: 1px solid var(--divider);
+      border-right: 1px solid var(--divider);
+      padding: 0 16px;
+    }
+
+    .insight-body {
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: opacity 0.2s ease;
+    }
+
+    .quote-text {
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 500;
+      color: var(--text-main);
+      font-style: italic;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .quote-author {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .refresh-btn {
+      background: var(--pill-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s;
+    }
+
+    .refresh-btn:hover {
+      background: var(--divider);
+      color: var(--text-main);
+    }
+
+    /* 3. TICKET POD */
+    .ticket-pod {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .ticket-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--pill-bg);
+      border: 1px dashed var(--card-border);
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+
+    .ticket-num {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.04em;
+    }
+
+    .copy-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 5px;
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .copy-btn.copied {
+      background: var(--success-bg);
+      color: var(--success);
+      border-color: var(--success);
+    }
+
+    .ticket-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    .mosru-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .mosru-link:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 960px) {
+      .books-bar {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .insight-pod {
+        border-left: none;
+        border-right: none;
+        border-top: 1px solid var(--divider);
+        border-bottom: 1px solid var(--divider);
+        padding: 8px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="books-bar">
+
+    <!-- 1. READING CHALLENGE -->
+    <div class="pod">
+      <div class="pod-header">
+        <span class="pod-title">🏆 Вызов 2026</span>
+        <div class="challenge-ctrls">
+          <span class="challenge-badge" id="pct-badge">53%</span>
+          <button class="ctrl-btn" onclick="changeRead(-1)" title="Убавить">−</button>
+          <button class="ctrl-btn" onclick="changeRead(1)" title="Прибавить">+</button>
+        </div>
+      </div>
+      <div class="challenge-stat">
+        <span class="stat-main" id="read-count">8</span>
+        <span class="stat-target">из <b id="target-count">15</b> книг</span>
+      </div>
+      <div class="track">
+        <div class="track-fill" id="track-fill" style="width: 53%;"></div>
+      </div>
+      <div class="challenge-meta">
+        <span id="left-label">Осталось: 7 книг</span>
+        <span>Золотой фонд: 45 книг</span>
+      </div>
+    </div>
+
+    <!-- 2. INSIGHT FROM NOTES -->
+    <div class="pod insight-pod">
+      <div class="pod-header">
+        <span class="pod-title">💡 Инсайт из заметок</span>
+        <button class="refresh-btn" onclick="nextQuote()" title="Показать другую мысль">
+          <span>🔄</span> <span>Ещё мысль</span>
+        </button>
+      </div>
+      <div class="insight-body" id="quote-body">
+        <div class="quote-text" id="quote-text">«Нигде ничто не ждёт человека. Всегда надо приносить всё с собой. Любовь - в семью. Счастье - в будни. Тепло - в дружбу.»</div>
+        <div class="quote-author" id="quote-author">— Эрих Мария Ремарк</div>
+      </div>
+    </div>
+
+    <!-- 3. LIBRARY TICKET (ЕЧБ) -->
+    <div class="pod ticket-pod">
+      <div class="pod-header">
+        <span class="pod-title">🎟️ Единый читательский</span>
+        <span style="font-size: 10px; color: var(--text-sub);">Все библиотеки Москвы</span>
+      </div>
+      <div class="ticket-row">
+        <span class="ticket-num">999 000 165 8779</span>
+        <button class="copy-btn" id="copy-btn" onclick="copyTicket()">Копировать</button>
+      </div>
+      <div class="ticket-footer">
+        <span>Действителен</span>
+        <a class="mosru-link" href="https://www.mos.ru/knigi/catalog/" target="_blank">Каталог mos.ru ↗</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 1. Curated Quotes Collection from User's Notion Notes
+    const QUOTES = [
+      {"text": "Нигде ничто не ждёт человека. Всегда надо приносить всё с собой. Любовь - в семью. Счастье - в будни. Тепло - в дружбу.", "author": "Эрих Мария Ремарк", "source": ""},
+      {"text": "Всегда помните, что вы никому не принадлежите и никто не принадлежит вам. Подумайте о том, что однажды вам придётся внезапно оставить всё в этом мире, — так начните знакомство с Богом уже сейчас.", "author": "Лахири Махасая", "source": "Автобиография йога"},
+      {"text": "Моя цель состояла не в том, чтобы сразу стать совершенным, а в том, чтобы постепенно приучить себя замечать собственные слабости и исправлять их. Я сосредотачивался на одной добродетели за раз, пока она не становилась привычкой.", "author": "Бенджамин Франклин", "source": ""},
+      {"text": "Ты всегда можешь начать сначала. Очистить социальные сети. Создать новый плейлист, который тебе теперь по вкусу. Учиться или работать в новом городе. Начать общаться с новыми людьми.", "author": "Заметки", "source": "Начать заново"},
+      {"text": "Чехов вставал в пять утра. До девяти принимал больных, затем писал, читал статьи о медицине. После обеда обучал горничных грамоте. После снова читал и писал. Вёл перепись, занимался хозяйством, объезжал больных.", "author": "Юрий Быков", "source": "О труде и созидании"},
+      {"text": "Тот, кому однажды ты сделал добро, готов ответить вам добром значительно большим, чем ваше...", "author": "Бенджамин Франклин", "source": ""},
+      {"text": "Они не задаются вопросом — почему. Никогда.", "author": "Йоав Блум", "source": "Творцы совпадений"},
+      {"text": "Если фраза «мне нравится, как я выгляжу» кажется неискренней, ее можно заменить нейтральной: «Я учусь относиться к своему телу без враждебности».", "author": "Заметки", "source": "Практика благодарности"},
+      {"text": "Человек отвечает за свои решения и способы реагирования, но не несет 100% ответственности за все внешние события или болезни. Полезно разделять зону своего контроля и то, что от нас не зависит.", "author": "Джо Витале", "source": "Жизнь без ограничений"},
+      {"text": "Сегодня — самый подходящий день, чтобы жить, чувствовать, любить и созидать.", "author": "Далай-лама", "source": ""},
+      {"text": "Любая привычка формируется через регулярность малых действий, а не через редкие титанические рывки.", "author": "Заметки", "source": "Привычки"},
+      {"text": "Упорство и готовность продолжать после неудач определяют результат в долгосрочной перспективе сильнее, чем врожденный талант.", "author": "Заметки", "source": "Исследование Вест-Пойнта"},
+      {"text": "Пока мы откладываем жизнь на потом, она проходит мимо.", "author": "Сенека", "source": "О скоротечности жизни"},
+      {"text": "Единственный способ делать великие дела — любить то, что вы делаете. Если вы еще не нашли своего дела, продолжайте искать.", "author": "Стив Джобс", "source": "Становление Стива Джобса"},
+      {"text": "Свобода — это возможность сказать, что дважды два — четыре. Если это признается, всё остальное приложится.", "author": "Джордж Оруэлл", "source": "1984"},
+      {"text": "Есть преступления хуже, чем сжигать книги. Одно из них — не читать их.", "author": "Рэй Брэдбери", "source": "451 градус по Фаренгейту"}
+    ];
+
+    function getRandomQuote() {
+      const idx = Math.floor(Math.random() * QUOTES.length);
+      return QUOTES[idx];
+    }
+
+    function renderQuote(q) {
+      const body = document.getElementById('quote-body');
+      body.style.opacity = '0';
+      setTimeout(() => {
+        document.getElementById('quote-text').innerText = '«' + q.text + '»';
+        let authorText = '— ' + (q.author || 'Заметки');
+        if (q.source && q.source !== q.author) {
+          authorText += ' (' + q.source + ')';
+        }
+        document.getElementById('quote-author').innerText = authorText;
+        body.style.opacity = '1';
+      }, 150);
+    }
+
+    function nextQuote() {
+      renderQuote(getRandomQuote());
+    }
+
+    // 2. Reading Challenge Logic
+    let TARGET = 15;
+    let READ = parseInt(localStorage.getItem('books_read_2026') || '8', 10);
+
+    function updateChallenge() {
+      const pct = Math.min(100, Math.round((READ / TARGET) * 100));
+      const left = Math.max(0, TARGET - READ);
+
+      document.getElementById('read-count').innerText = READ;
+      document.getElementById('target-count').innerText = TARGET;
+      document.getElementById('pct-badge').innerText = pct + '%';
+      document.getElementById('track-fill').style.width = pct + '%';
+      document.getElementById('left-label').innerText = left > 0 ? ('Осталось: ' + left + ' ' + declOfNum(left, ['книга', 'книги', 'книг'])) : '🎉 Цель выполнена!';
+
+      localStorage.setItem('books_read_2026', READ);
+    }
+
+    function changeRead(delta) {
+      READ = Math.max(0, READ + delta);
+      updateChallenge();
+    }
+
+    function declOfNum(n, titles) {
+      return titles[(n % 100 > 4 && n % 100 < 20) ? 2 : [2, 0, 1, 1, 1, 2][(n % 10 < 5) ? Math.abs(n) % 10 : 5]];
+    }
+
+    // 3. Copy Ticket
+    function copyTicket() {
+      const num = '9990001658779';
+      navigator.clipboard.writeText(num).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerText = '✓ Скопировано';
+        btn.className = 'copy-btn copied';
+        setTimeout(() => {
+          btn.innerText = 'Копировать';
+          btn.className = 'copy-btn';
+        }, 2000);
+      }).catch(() => {
+        prompt('Номер билета:', num);
+      });
+    }
+
+    // Initial render
+    renderQuote(getRandomQuote());
+    updateChallenge();
+  </script>
+</body>
+</html>
