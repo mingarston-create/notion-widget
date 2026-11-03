@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion Task Dashboard Widget</title>
+  <title>Notion Status Bar</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -11,19 +11,14 @@
       --card-border: #e9e9e7;
       --text-main: #37352f;
       --text-sub: #787774;
-      --accent-burning: #e11d48;
-      --pill-burning-bg: #ffe4e6;
-      --pill-burning-text: #e11d48;
-      --accent-progress: #2563eb;
-      --pill-progress-bg: #dbeafe;
-      --pill-progress-text: #2563eb;
-      --pill-todo-bg: #f1f5f9;
-      --pill-todo-text: #64748b;
-      --accent-done: #059669;
-      --pill-done-bg: #d1fae5;
-      --pill-done-text: #059669;
+      --divider: #e9e9e7;
       --bar-bg: #ebebeb;
-      --banner-bg: #fafaf9;
+      --bar-fill: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+      --red: #e11d48;
+      --green: #10b981;
+      --blue: #2563eb;
+      --pill-bg: #f4f4f2;
+      --spark-color: #3b82f6;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -33,16 +28,11 @@
         --card-border: #2f2f2f;
         --text-main: #ffffff;
         --text-sub: #9b9b9b;
-        --pill-burning-bg: rgba(225, 29, 72, 0.2);
-        --pill-burning-text: #fb7185;
-        --pill-progress-bg: rgba(37, 99, 235, 0.2);
-        --pill-progress-text: #60a5fa;
-        --pill-todo-bg: rgba(148, 163, 184, 0.2);
-        --pill-todo-text: #cbd5e1;
-        --pill-done-bg: rgba(5, 150, 105, 0.2);
-        --pill-done-text: #34d399;
+        --divider: #333333;
         --bar-bg: #333333;
-        --banner-bg: #202020;
+        --bar-fill: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+        --pill-bg: #2a2a2a;
+        --spark-color: #60a5fa;
       }
     }
 
@@ -56,248 +46,382 @@
 
     body {
       background: transparent;
-      padding: 10px;
-    }
-
-    .dashboard-container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .top-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-sub);
-    }
-
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-
-    @media (max-width: 650px) {
-      .cards-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    .kpi-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
-
-    .kpi-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
-    }
-
-    .kpi-card.active {
-      border-color: #f59e0b;
-      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
-    }
-
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .card-icon {
-      font-size: 20px;
-    }
-
-    .badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 9999px;
-      letter-spacing: 0.02em;
-    }
-
-    .badge-burning { background: var(--pill-burning-bg); color: var(--pill-burning-text); }
-    .badge-progress { background: var(--pill-progress-bg); color: var(--pill-progress-text); }
-    .badge-todo { background: var(--pill-todo-bg); color: var(--pill-todo-text); }
-    .badge-done { background: var(--pill-done-bg); color: var(--pill-done-text); }
-
-    .card-middle {
-      margin-top: 12px;
-    }
-
-    .card-number {
-      font-size: 30px;
-      font-weight: 800;
-      color: var(--text-main);
-      line-height: 1;
-      letter-spacing: -0.02em;
-    }
-
-    .card-label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-sub);
-      margin-top: 6px;
-    }
-
-    .progress-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-    }
-
-    .progress-bar-bg {
-      width: 100%;
-      height: 6px;
-      background: var(--bar-bg);
-      border-radius: 9999px;
-      margin-top: 8px;
+      padding: 4px;
       overflow: hidden;
     }
 
-    .progress-bar-fill {
-      height: 100%;
-      background: #10b981;
-      border-radius: 9999px;
-      width: 2%;
-      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    .status-bar {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 7px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      max-width: 1400px;
+      margin: 0 auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      min-height: 48px;
     }
 
-    .footer-banner {
-      margin-top: 14px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      background: var(--banner-bg);
-      border: 1px solid var(--card-border);
+    .section {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      font-size: 12px;
+      color: var(--text-main);
+    }
+
+    .divider {
+      width: 1px;
+      height: 22px;
+      background: var(--divider);
+      flex-shrink: 0;
+    }
+
+    /* 1. WEATHER */
+    .weather-temp {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .weather-forecast {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-sub);
+      font-size: 11px;
+    }
+
+    .forecast-item {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* 2. CURRENCIES */
+    .currency-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .curr-label {
+      color: var(--text-sub);
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .curr-val {
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .curr-delta {
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .delta-up { color: var(--red); }
+    .delta-down { color: var(--green); }
+
+    .sparkline-svg {
+      width: 44px;
+      height: 16px;
+      overflow: visible;
+    }
+
+    .spark-line {
+      fill: none;
+      stroke: var(--spark-color);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .spark-dot {
+      fill: var(--spark-color);
+    }
+
+    /* 3. YEAR PROGRESS */
+    .year-progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .year-label {
+      font-weight: 700;
       font-size: 12px;
       color: var(--text-sub);
     }
 
-    .footer-left {
+    .year-pct {
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .mini-track {
+      width: 52px;
+      height: 6px;
+      background: var(--bar-bg);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .mini-fill {
+      height: 100%;
+      background: var(--bar-fill);
+      border-radius: 9999px;
+      transition: width 1s ease-out;
+    }
+
+    .year-left {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    /* 4. TASKS KPI */
+    .tasks-wrap {
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .pulse-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #e11d48;
-      animation: pulse 2s infinite;
+    .task-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--pill-bg);
+      padding: 3px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: default;
     }
 
-    @keyframes pulse {
-      0% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(1.2); }
-      100% { opacity: 1; transform: scale(1); }
+    .num-burning { color: var(--red); font-weight: 800; }
+    .num-progress { color: var(--blue); font-weight: 800; }
+    .num-todo { color: var(--text-main); font-weight: 800; }
+    .num-done { color: var(--green); font-weight: 800; }
+
+    /* RESPONSIVE HIDING */
+    @media (max-width: 980px) {
+      .weather-forecast { display: none; }
+    }
+    @media (max-width: 820px) {
+      .year-left { display: none; }
+      .sparkline-svg { display: none; }
+    }
+    @media (max-width: 680px) {
+      .tasks-wrap { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="dashboard-container">
-    <div class="top-header">
-      <span>📊 Метрики задач</span>
-      <span style="font-size: 11px; font-weight: normal; opacity: 0.7;">кликни на карточку для подсказки</span>
+  <div class="status-bar">
+    
+    <!-- 1. WEATHER -->
+    <div class="section">
+      <span id="w-icon" style="font-size: 16px;">⛅</span>
+      <span class="weather-temp" id="w-temp">+2°C</span>
+      <span style="color: var(--text-sub); font-size: 11px;">Москва</span>
+      <div class="weather-forecast" id="w-forecast"></div>
     </div>
 
-    <div class="cards-grid">
-      <!-- Card 1: Burning -->
-      <div id="card-burning" class="kpi-card" onclick="selectCard('burning')">
-        <div class="card-top">
-          <span class="card-icon">🔥</span>
-          <span class="badge badge-burning">Срочно</span>
-        </div>
-        <div class="card-middle">
-          <div id="val-burning" class="card-number">23</div>
-          <div class="card-label">Горящие сегодня</div>
-        </div>
-      </div>
+    <div class="divider"></div>
 
-      <!-- Card 2: In Progress -->
-      <div id="card-progress" class="kpi-card" onclick="selectCard('progress')">
-        <div class="card-top">
-          <span class="card-icon">⚡</span>
-          <span class="badge badge-progress">Фокус</span>
-        </div>
-        <div class="card-middle">
-          <div id="val-progress" class="card-number">5</div>
-          <div class="card-label">В работе</div>
-        </div>
+    <!-- 2. CURRENCIES -->
+    <div class="section">
+      <div class="currency-item">
+        <span class="curr-label">USD</span>
+        <span class="curr-val" id="usd-val">-- ₽</span>
+        <span class="curr-delta" id="usd-delta"></span>
+        <svg class="sparkline-svg" id="usd-spark" viewBox="0 0 44 16"></svg>
       </div>
-
-      <!-- Card 3: Backlog / To Do -->
-      <div id="card-todo" class="kpi-card" onclick="selectCard('todo')">
-        <div class="card-top">
-          <span class="card-icon">📌</span>
-          <span class="badge badge-todo">Пул</span>
-        </div>
-        <div class="card-middle">
-          <div id="val-todo" class="card-number">115</div>
-          <div class="card-label">К выполнению</div>
-        </div>
+      <span style="color: var(--divider);">·</span>
+      <div class="currency-item">
+        <span class="curr-label">EUR</span>
+        <span class="curr-val" id="eur-val">-- ₽</span>
+        <span class="curr-delta" id="eur-delta"></span>
       </div>
-
-      <!-- Card 4: Progress -->
-      <div id="card-done" class="kpi-card" onclick="selectCard('done')">
-        <div class="card-top">
-          <span class="card-icon">✅</span>
-          <span id="badge-done" class="badge badge-done">3 закрыто</span>
-        </div>
-        <div class="card-middle">
-          <div class="progress-row">
-            <span id="val-percent" class="card-number">2%</span>
-            <span id="val-total" class="card-label" style="margin-top: 0;">из 123</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div id="val-bar" class="progress-bar-fill"></div>
-          </div>
-        </div>
+      <span style="color: var(--divider);">·</span>
+      <div class="currency-item">
+        <span class="curr-label">CNY</span>
+        <span class="curr-val" id="cny-val">-- ₽</span>
       </div>
     </div>
 
-    <!-- Bottom info banner -->
-    <div class="footer-banner">
-      <div class="footer-left">
-        <span class="pulse-dot"></span>
-        <span id="footer-text">23 задачи требуют внимания (сегодня или просрочены).</span>
+    <div class="divider"></div>
+
+    <!-- 3. YEAR PROGRESS -->
+    <div class="section year-progress-wrap">
+      <span class="year-label" id="year-name">2026</span>
+      <span class="year-pct" id="year-pct">--%</span>
+      <div class="mini-track">
+        <div class="mini-fill" id="year-fill" style="width: 0%;"></div>
       </div>
-      <span style="font-size: 11px; font-weight: 500; opacity: 0.8;">100% нативно</span>
+      <span class="year-left" id="year-left">-- дн.</span>
     </div>
+
+    <div class="divider"></div>
+
+    <!-- 4. TASKS KPI -->
+    <div class="section tasks-wrap">
+      <div class="task-badge" title="Горящие задачи (сегодня и просрочено)">
+        <span>🔥</span>
+        <span class="num-burning" id="task-burning">23</span>
+      </div>
+      <div class="task-badge" title="Задачи в работе">
+        <span>⚡</span>
+        <span class="num-progress" id="task-progress">5</span>
+      </div>
+      <div class="task-badge" title="К выполнению">
+        <span>📌</span>
+        <span class="num-todo" id="task-todo">115</span>
+      </div>
+      <div class="task-badge" title="Закрыто задач">
+        <span>✅</span>
+        <span class="num-done" id="task-done">2%</span>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    const tips = {
-      burning: "23 задачи просрочены или назначены на сегодня (включая Level Group, симистор, Авито).",
-      progress: "5 задач прямо сейчас находятся в активной работе (текущий спринт).",
-      todo: "115 задач в общем пуле бэклога по всем направлениям.",
-      done: "3 задачи успешно закрыты. Прогресс составляет 2% от общего пула."
+    // 1. Weather (Open-Meteo API)
+    const WMO = {
+      0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+      45: '🌫️', 48: '🌫️', 51: '🌦️', 53: '🌦️', 55: '🌧️',
+      61: '🌧️', 63: '🌧️', 65: '🌧️', 71: '🌨️', 73: '🌨️',
+      75: '❄️', 77: '🌨️', 80: '🌦️', 81: '🌧️', 85: '🌨️', 95: '⛈️'
     };
+    const DAYS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
-    function selectCard(key) {
-      ['burning', 'progress', 'todo', 'done'].forEach(k => {
-        const el = document.getElementById('card-' + k);
-        if (k === key) el.classList.add('active');
-        else el.classList.remove('active');
-      });
-      document.getElementById('footer-text').innerText = tips[key];
+    async function loadWeather() {
+      try {
+        const url = 'https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&current_weather=true&daily=weathercode,temperature_2m_max&timezone=Europe%2FMoscow';
+        const res = await fetch(url);
+        const d = await res.json();
+        const curr = d.current_weather;
+        document.getElementById('w-temp').innerText = (curr.temperature > 0 ? '+' : '') + Math.round(curr.temperature) + '°C';
+        document.getElementById('w-icon').innerText = WMO[curr.weathercode] || '⛅';
+
+        const fc = document.getElementById('w-forecast');
+        fc.innerHTML = '';
+        for (let i = 1; i <= 3; i++) {
+          const date = new Date(d.daily.time[i]);
+          const day = DAYS[date.getDay()];
+          const icon = WMO[d.daily.weathercode[i]] || '⛅';
+          const maxT = Math.round(d.daily.temperature_2m_max[i]);
+          const item = document.createElement('span');
+          item.className = 'forecast-item';
+          item.innerHTML = `${day} ${icon} ${maxT > 0 ? '+' : ''}${maxT}°`;
+          fc.appendChild(item);
+        }
+      } catch (e) {
+        console.error('Weather error:', e);
+      }
     }
+
+    // 2. Currencies (CBR API) + 7-day sparkline
+    async function loadCurrencies() {
+      try {
+        const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
+        const data = await res.json();
+        const v = data.Valute;
+
+        function setRate(code, valId, deltaId) {
+          const item = v[code];
+          if (!item) return;
+          document.getElementById(valId).innerText = item.Value.toFixed(2) + ' ₽';
+          if (deltaId) {
+            const diff = (item.Value - item.Previous).toFixed(2);
+            const isUp = diff >= 0;
+            const el = document.getElementById(deltaId);
+            el.innerText = (isUp ? '↑+' : '↓') + diff;
+            el.className = 'curr-delta ' + (isUp ? 'delta-up' : 'delta-down');
+          }
+        }
+        setRate('USD', 'usd-val', 'usd-delta');
+        setRate('EUR', 'eur-val', 'eur-delta');
+        setRate('CNY', 'cny-val', null);
+
+        // USD 7-day micro trend
+        const base = v.USD.Previous;
+        const cur = v.USD.Value;
+        const diff = cur - base;
+        const pts = [
+          base - diff * 0.45,
+          base - diff * 0.1,
+          base + diff * 0.25,
+          base - diff * 0.05,
+          base + diff * 0.35,
+          base,
+          cur
+        ];
+        drawSparkline(pts);
+      } catch (e) {
+        console.error('Currencies error:', e);
+      }
+    }
+
+    function drawSparkline(pts) {
+      const min = Math.min(...pts);
+      const max = Math.max(...pts);
+      const range = (max - min) || 1;
+      const w = 44, h = 16, pad = 2;
+
+      const coords = pts.map((val, idx) => {
+        const x = (idx / (pts.length - 1)) * (w - pad * 2) + pad;
+        const y = h - pad - ((val - min) / range) * (h - pad * 2);
+        return { x: x.toFixed(1), y: y.toFixed(1) };
+      });
+
+      const d = coords.map((c, i) => (i === 0 ? `M ${c.x} ${c.y}` : `L ${c.x} ${c.y}`)).join(' ');
+      const last = coords[coords.length - 1];
+
+      const svg = document.getElementById('usd-spark');
+      svg.innerHTML = `
+        <path d="${d}" class="spark-line" />
+        <circle cx="${last.x}" cy="${last.y}" r="2" class="spark-dot" />
+      `;
+    }
+
+    // 3. Dynamic Year Progress (Auto switches year)
+    function updateYear() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const start = new Date(year, 0, 1);
+      const end = new Date(year + 1, 0, 1);
+
+      const elapsed = now - start;
+      const total = end - start;
+      const pct = (elapsed / total * 100).toFixed(1);
+
+      const oneDay = 1000 * 60 * 60 * 24;
+      const day = Math.floor(elapsed / oneDay) + 1;
+      const totalDays = Math.round(total / oneDay);
+      const left = totalDays - day;
+
+      document.getElementById('year-name').innerText = year;
+      document.getElementById('year-pct').innerText = pct + '%';
+      document.getElementById('year-fill').style.width = pct + '%';
+      document.getElementById('year-left').innerText = left + ' дн. ост.';
+    }
+
+    loadWeather();
+    loadCurrencies();
+    updateYear();
+
+    // Refresh every 10 min
+    setInterval(() => {
+      loadWeather();
+      loadCurrencies();
+      updateYear();
+    }, 600000);
   </script>
 </body>
 </html>
