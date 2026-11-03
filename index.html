@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion Task Dashboard</title>
+  <title>Notion Dashboard Bar</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -12,18 +12,14 @@
       --text-main: #37352f;
       --text-sub: #787774;
       --divider: #ebebeb;
-      --tile-bg: #fbfbfa;
-      --tile-hover: #f1f1ef;
-      --bar-bg: #ebebeb;
+      --bar-bg: #e5e5e5;
       --bar-fill: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
       --red: #e11d48;
       --red-bg: #ffe4e6;
-      --blue: #2563eb;
-      --blue-bg: #dbeafe;
       --green: #10b981;
       --green-bg: #d1fae5;
-      --amber: #d97706;
-      --amber-bg: #fef3c7;
+      --blue: #2563eb;
+      --blue-bg: #dbeafe;
       --pill-bg: #f7f6f3;
     }
 
@@ -35,18 +31,14 @@
         --text-main: #ffffff;
         --text-sub: #9b9b9b;
         --divider: #333333;
-        --tile-bg: #262626;
-        --tile-hover: #2f2f2f;
         --bar-bg: #333333;
         --bar-fill: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
         --red: #f43f5e;
         --red-bg: #4c1d24;
-        --blue: #60a5fa;
-        --blue-bg: #1e3a5f;
         --green: #34d399;
         --green-bg: #133e2c;
-        --amber: #fbbf24;
-        --amber-bg: #451a03;
+        --blue: #60a5fa;
+        --blue-bg: #1e3a5f;
         --pill-bg: #2a2a2a;
       }
     }
@@ -61,380 +53,358 @@
 
     body {
       background: transparent;
-      padding: 6px 4px;
+      padding: 4px 2px;
       overflow: hidden;
     }
 
-    .dashboard-container {
-      display: grid;
-      grid-template-columns: 1.15fr 1.25fr 1.6fr;
-      gap: 14px;
-      max-width: 1400px;
-      margin: 0 auto;
-      min-height: 140px;
-    }
-
-    .card {
+    .dashboard-bar {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 16px 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-      transition: all 0.2s ease;
-    }
-
-    .card:hover {
-      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-      border-color: rgba(0,0,0,0.12);
-    }
-
-    .card-header {
+      border-radius: 16px;
+      padding: 10px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
+      gap: 14px;
+      max-width: 1400px;
+      margin: 0 auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      min-height: 80px;
     }
 
-    .card-title {
+    .divider {
+      width: 1px;
+      height: 44px;
+      background: var(--divider);
+      flex-shrink: 0;
+    }
+
+    /* 1. WEATHER POD */
+    .weather-pod {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .weather-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .weather-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .weather-temp-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .weather-temp {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: var(--text-main);
+    }
+
+    .weather-meta {
       font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
       color: var(--text-sub);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .weather-forecast {
       display: flex;
       align-items: center;
       gap: 5px;
     }
 
-    /* 1. WEATHER CARD */
-    .weather-main {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 4px 0;
-    }
-
-    .weather-icon {
-      font-size: 38px;
-      line-height: 1;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-    }
-
-    .weather-temp {
-      font-size: 32px;
-      font-weight: 800;
-      line-height: 1;
-      color: var(--text-main);
-      letter-spacing: -0.02em;
-    }
-
-    .weather-desc {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-sub);
-      margin-top: 3px;
-    }
-
-    .forecast-row {
-      display: flex;
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .forecast-pill {
-      flex: 1;
+    .forecast-card {
       background: var(--pill-bg);
-      border: 1px solid transparent;
-      border-radius: 8px;
-      padding: 6px 8px;
+      padding: 4px 8px;
+      border-radius: 7px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
-      font-size: 11px;
+      gap: 2px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--text-sub);
-      transition: all 0.15s ease;
+      min-width: 42px;
     }
 
-    .forecast-pill:hover {
-      background: var(--tile-hover);
-      border-color: var(--card-border);
-      transform: translateY(-1px);
-    }
-
-    .forecast-temp {
-      font-size: 12px;
-      font-weight: 800;
+    .forecast-card .f-temp {
+      font-size: 11px;
+      font-weight: 700;
       color: var(--text-main);
     }
 
-    /* 2. TIMELINE CARD */
-    .timeline-stat {
+    /* 2. CURRENCIES POD (–С–µ–Ј –≥—А–∞—Д–Є–Ї–∞, —В–Њ–ї—М–Ї–Њ –Ї—Г—А—Б—Л –Є –і–µ–ї—М—В—Л) */
+    .currency-pod {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .curr-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .curr-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .curr-code {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-sub);
+      width: 26px;
+    }
+
+    .curr-value {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-main);
+      min-width: 52px;
+    }
+
+    .curr-delta {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    .delta-up {
+      color: var(--red);
+      background: var(--red-bg);
+    }
+
+    .delta-down {
+      color: var(--green);
+      background: var(--green-bg);
+    }
+
+    /* 3. YEAR PROGRESS POD */
+    .year-pod {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0;
+      min-width: 140px;
+    }
+
+    .year-top {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      margin: 4px 0;
+      gap: 8px;
     }
 
-    .timeline-pct {
-      font-size: 32px;
-      font-weight: 800;
-      line-height: 1;
-      color: var(--text-main);
-      letter-spacing: -0.02em;
-    }
-
-    .timeline-badge {
-      font-size: 11px;
+    .year-title {
+      font-size: 10px;
       font-weight: 700;
-      color: var(--amber);
-      background: var(--amber-bg);
-      padding: 3px 8px;
-      border-radius: 6px;
+      color: var(--text-sub);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
-    .progress-bar-wrap {
-      margin: 8px 0;
+    .year-left-chip {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-sub);
+      background: var(--pill-bg);
+      padding: 2px 5px;
+      border-radius: 4px;
+      white-space: nowrap;
     }
 
-    .progress-bar {
-      width: 100%;
-      height: 10px;
+    .year-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .year-pct-big {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1;
+      min-width: 46px;
+    }
+
+    .progress-track {
+      flex: 1;
+      min-width: 70px;
+      height: 8px;
       background: var(--bar-bg);
-      border-radius: 999px;
+      border-radius: 9999px;
       overflow: hidden;
     }
 
     .progress-fill {
       height: 100%;
       background: var(--bar-fill);
-      border-radius: 999px;
-      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 9999px;
+      transition: width 1s ease-out;
     }
 
-    .month-subtrack {
+    /* 4. TASKS POD */
+    .tasks-pod {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-sub);
-      padding-top: 4px;
-      border-top: 1px dashed var(--divider);
-      margin-top: 4px;
+      gap: 7px;
+      flex-shrink: 0;
     }
 
-    .month-bar {
-      width: 70px;
-      height: 5px;
-      background: var(--bar-bg);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .month-fill {
-      height: 100%;
-      background: var(--blue);
-      border-radius: 999px;
-    }
-
-    /* 3. TASKS METRICS CARD */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-top: 6px;
-      height: 100%;
-    }
-
-    .kpi-tile {
-      background: var(--tile-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 10px 12px;
+    .task-card {
+      background: var(--pill-bg);
+      border-radius: 9px;
+      padding: 6px 10px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.15s ease;
-      cursor: default;
-    }
-
-    .kpi-tile:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-      background: var(--tile-hover);
-    }
-
-    .kpi-header {
-      display: flex;
       align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-sub);
+      gap: 2px;
+      min-width: 52px;
+      transition: transform 0.15s ease;
     }
 
-    .kpi-badge {
-      font-size: 9px;
-      font-weight: 800;
-      padding: 2px 5px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+    .task-card:hover {
+      transform: translateY(-2px);
     }
 
-    .kpi-num {
-      font-size: 26px;
-      font-weight: 800;
-      line-height: 1.1;
-      margin-top: 4px;
-    }
-
-    .kpi-sub {
+    .task-header {
       font-size: 10px;
       font-weight: 600;
       color: var(--text-sub);
-      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      white-space: nowrap;
+    }
+
+    .task-num {
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.1;
     }
 
     .num-burning { color: var(--red); }
-    .badge-burning { background: var(--red-bg); color: var(--red); }
-
     .num-progress { color: var(--blue); }
-    .badge-progress { background: var(--blue-bg); color: var(--blue); }
-
     .num-todo { color: var(--text-main); }
-    .badge-todo { background: var(--pill-bg); color: var(--text-sub); }
-
     .num-done { color: var(--green); }
-    .badge-done { background: var(--green-bg); color: var(--green); }
 
-    @media (max-width: 960px) {
-      .dashboard-container {
-        grid-template-columns: 1fr;
-        gap: 12px;
-        min-height: auto;
-      }
+    /* RESPONSIVE BREAKPOINTS */
+    @media (max-width: 1020px) {
+      .weather-forecast { display: none; }
+    }
+    @media (max-width: 780px) {
+      .currency-pod { display: none; }
+      .divider:nth-of-type(2) { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="dashboard-container">
+  <div class="dashboard-bar">
 
-    <!-- CARD 1: WEATHER -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">вЫЕ –Я–Њ–≥–Њ–і–∞ –≤ –Ь–Њ—Б–Ї–≤–µ</span>
-        <span style="font-size: 10px; font-weight: 700; color: var(--text-sub);">Open-Meteo</span>
-      </div>
+    <!-- 1. WEATHER -->
+    <div class="weather-pod">
       <div class="weather-main">
         <div class="weather-icon" id="w-icon">вЫЕ</div>
-        <div>
+        <div class="weather-temp-wrap">
           <div class="weather-temp" id="w-temp">+2¬∞C</div>
-          <div class="weather-desc" id="w-desc">–Ь–Њ—Б–Ї–≤–∞ ¬Ј –Я–∞—Б–Љ—Г—А–љ–Њ</div>
+          <div class="weather-meta" id="w-desc">–Ь–Њ—Б–Ї–≤–∞ ¬Ј –Я–∞—Б–Љ—Г—А–љ–Њ</div>
         </div>
       </div>
-      <div class="forecast-row" id="forecast-container"></div>
+      <div class="weather-forecast" id="w-forecast"></div>
     </div>
 
-    <!-- CARD 2: TIMELINE 2026 -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title" id="timeline-title">вП≥ –Ґ–∞–є–Љ–ї–∞–є–љ 2026</span>
-        <span class="timeline-badge" id="timeline-badge">-- –і–љ–µ–є –Њ—Б—В.</span>
-      </div>
-      <div>
-        <div class="timeline-stat">
-          <span class="timeline-pct" id="year-pct">--%</span>
-          <span style="font-size: 12px; font-weight: 600; color: var(--text-sub);" id="year-days-info">–і–µ–љ—М -- –Є–Ј --</span>
+    <div class="divider"></div>
+
+    <!-- 2. CURRENCIES (–С–µ–Ј –≥—А–∞—Д–Є–Ї–∞ USD 7 –Ф–Э–Х–Щ) -->
+    <div class="currency-pod">
+      <div class="curr-col">
+        <div class="curr-row">
+          <span class="curr-code">USD</span>
+          <span class="curr-value" id="usd-val">-- вВљ</span>
+          <span class="curr-delta" id="usd-delta"></span>
         </div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar">
-            <div class="progress-fill" id="year-fill" style="width: 0%;"></div>
-          </div>
+        <div class="curr-row">
+          <span class="curr-code">EUR</span>
+          <span class="curr-value" id="eur-val">-- вВљ</span>
+          <span class="curr-delta" id="eur-delta"></span>
         </div>
-      </div>
-      <div class="month-subtrack">
-        <span id="month-name">–Э–Њ—П–±—А—М ¬Ј 4 –Є–Ј 30 –і–љ–µ–є</span>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <div class="month-bar">
-            <div class="month-fill" id="month-fill" style="width: 13%;"></div>
-          </div>
-          <span id="month-pct" style="font-weight: 700;">13%</span>
+        <div class="curr-row">
+          <span class="curr-code">CNY</span>
+          <span class="curr-value" id="cny-val">-- вВљ</span>
+          <span class="curr-delta" id="cny-delta"></span>
         </div>
       </div>
     </div>
 
-    <!-- CARD 3: TASK KPI TILES -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">рЯОѓ –Я—Г–ї—М—Б –Ј–∞–і–∞—З</span>
-        <span style="font-size: 10px; font-weight: 700; color: var(--text-sub);" id="tasks-total-badge">123 –Ј–∞–і–∞—З–Є</span>
+    <div class="divider"></div>
+
+    <!-- 3. YEAR PROGRESS -->
+    <div class="year-pod">
+      <div class="year-top">
+        <span class="year-title" id="year-title">2026 –У–Ю–Ф</span>
+        <span class="year-left-chip" id="year-left">-- –і–љ. –Њ—Б—В.</span>
       </div>
-      <div class="kpi-grid">
-        
-        <div class="kpi-tile" title="–Ч–∞–і–∞—З–Є –љ–∞ —Б–µ–≥–Њ–і–љ—П –Є –њ—А–Њ—Б—А–Њ—З–µ–љ–љ—Л–µ">
-          <div class="kpi-header">
-            <span>рЯФ• –°—А–Њ—З–љ–Њ</span>
-            <span class="kpi-badge badge-burning">–Ф–µ–і–ї–∞–є–љ</span>
-          </div>
-          <div class="kpi-num num-burning" id="task-burning">24</div>
-          <div class="kpi-sub">–њ—А–Њ—Б—А–Њ—З–µ–љ–Њ</div>
+      <div class="year-bar-row">
+        <span class="year-pct-big" id="year-pct">--%</span>
+        <div class="progress-track">
+          <div class="progress-fill" id="year-fill" style="width: 0%;"></div>
         </div>
+      </div>
+    </div>
 
-        <div class="kpi-tile" title="–Ч–∞–і–∞—З–Є –≤ —В–µ–Ї—Г—Й–µ–є —А–∞–±–Њ—В–µ">
-          <div class="kpi-header">
-            <span>вЪ° –Т —А–∞–±–Њ—В–µ</span>
-            <span class="kpi-badge badge-progress">–§–Њ–Ї—Г—Б</span>
-          </div>
-          <div class="kpi-num num-progress" id="task-progress">6</div>
-          <div class="kpi-sub">–≤ –њ—А–Њ—Ж–µ—Б—Б–µ</div>
-        </div>
+    <div class="divider"></div>
 
-        <div class="kpi-tile" title="–Ч–∞–і–∞—З–Є –≤ –Њ—З–µ—А–µ–і–Є">
-          <div class="kpi-header">
-            <span>рЯУМ –Ъ —Б–і–∞—З–µ</span>
-            <span class="kpi-badge badge-todo">–Я—Г–ї</span>
-          </div>
-          <div class="kpi-num num-todo" id="task-todo">114</div>
-          <div class="kpi-sub">–≤ –±—Н–Ї–ї–Њ–≥–µ</div>
-        </div>
-
-        <div class="kpi-tile" title="–Т—Л–њ–Њ–ї–љ–µ–љ–љ—Л–µ –Ј–∞–і–∞—З–Є">
-          <div class="kpi-header">
-            <span>вЬЕ –У–Њ—В–Њ–≤–Њ</span>
-            <span class="kpi-badge badge-done">–£—Б–њ–µ—Е</span>
-          </div>
-          <div class="kpi-num num-done" id="task-done">2%</div>
-          <div class="kpi-sub" id="task-done-sub">3 –Ј–∞–Ї—А—Л—В–Њ</div>
-        </div>
-
+    <!-- 4. TASKS KPI -->
+    <div class="tasks-pod">
+      <div class="task-card" title="–°—А–Њ—З–љ—Л–µ / –њ—А–Њ—Б—А–Њ—З–µ–љ–љ—Л–µ –Ј–∞–і–∞—З–Є">
+        <div class="task-header">рЯФ• –°—А–Њ—З–љ–Њ</div>
+        <div class="task-num num-burning" id="task-burning">24</div>
+      </div>
+      <div class="task-card" title="–Ч–∞–і–∞—З–Є –≤ —А–∞–±–Њ—В–µ">
+        <div class="task-header">вЪ° –Т —А–∞–±–Њ—В–µ</div>
+        <div class="task-num num-progress" id="task-progress">6</div>
+      </div>
+      <div class="task-card" title="–Ъ —Б–і–∞—З–µ / –≤ –±—Н–Ї–ї–Њ–≥–µ">
+        <div class="task-header">рЯУМ –Я—Г–ї</div>
+        <div class="task-num num-todo" id="task-todo">114</div>
+      </div>
+      <div class="task-card" title="–Ч–∞–Ї—А—Л—В–Њ –Ј–∞–і–∞—З">
+        <div class="task-header">вЬЕ –У–Њ—В–Њ–≤–Њ</div>
+        <div class="task-num num-done" id="task-done">2%</div>
       </div>
     </div>
 
   </div>
 
   <script>
-    // 0. READ URL PARAMS FOR REAL-TIME TASK METRICS
+    // 0. URL PARAMS FOR TASK METRICS
     const params = new URLSearchParams(window.location.search);
     const b = params.get('b');
     const p = params.get('p');
     const t = params.get('t');
-    const d = params.get('d');
-    const tot = params.get('tot');
     const pct = params.get('pct');
 
     if (b) document.getElementById('task-burning').innerText = b;
     if (p) document.getElementById('task-progress').innerText = p;
     if (t) document.getElementById('task-todo').innerText = t;
     if (pct) document.getElementById('task-done').innerText = pct + '%';
-    if (d) document.getElementById('task-done-sub').innerText = d + ' –Ј–∞–Ї—А—Л—В–Њ';
-    if (tot) document.getElementById('tasks-total-badge').innerText = tot + ' –Ј–∞–і–∞—З–Є';
 
     // 1. WEATHER LOGIC (Open-Meteo API)
     const WMO = {
@@ -460,7 +430,6 @@
       95: { icon: 'вЫИпЄП', text: '–У—А–Њ–Ј–∞' }
     };
     const DAYS = ['–Т—Б', '–Я–љ', '–Т—В', '–°—А', '–І—В', '–Я—В', '–°–±'];
-    const MONTHS = ['–ѓ–љ–≤–∞—А—М', '–§–µ–≤—А–∞–ї—М', '–Ь–∞—А—В', '–Р–њ—А–µ–ї—М', '–Ь–∞–є', '–Ш—О–љ—М', '–Ш—О–ї—М', '–Р–≤–≥—Г—Б—В', '–°–µ–љ—В—П–±—А—М', '–Ю–Ї—В—П–±—А—М', '–Э–Њ—П–±—А—М', '–Ф–µ–Ї–∞–±—А—М'];
 
     async function loadWeather() {
       try {
@@ -474,71 +443,86 @@
         document.getElementById('w-icon').innerText = wInfo.icon;
         document.getElementById('w-desc').innerText = '–Ь–Њ—Б–Ї–≤–∞ ¬Ј ' + wInfo.text;
 
-        const container = document.getElementById('forecast-container');
-        container.innerHTML = '';
+        const fc = document.getElementById('w-forecast');
+        fc.innerHTML = '';
         for (let i = 1; i <= 3; i++) {
           const date = new Date(data.daily.time[i]);
-          const dayName = DAYS[date.getDay()];
+          const day = DAYS[date.getDay()];
           const fCode = data.daily.weathercode[i];
           const icon = (WMO[fCode] && WMO[fCode].icon) || 'вЫЕ';
           const maxT = Math.round(data.daily.temperature_2m_max[i]);
 
-          const pill = document.createElement('div');
-          pill.className = 'forecast-pill';
-          pill.innerHTML = `
-            <span>${dayName} ${icon}</span>
-            <span class="forecast-temp">${maxT > 0 ? '+' : ''}${maxT}¬∞</span>
+          const card = document.createElement('div');
+          card.className = 'forecast-card';
+          card.innerHTML = `
+            <span>${day} ${icon}</span>
+            <span class="f-temp">${maxT > 0 ? '+' : ''}${maxT}¬∞</span>
           `;
-          container.appendChild(pill);
+          fc.appendChild(card);
         }
       } catch (e) {
         console.error('Weather error:', e);
       }
     }
 
-    // 2. TIMELINE LOGIC (Dynamic Year & Month Progress)
-    function updateTimeline() {
+    // 2. CURRENCIES (CBR API - —В–Њ–ї—М–Ї–Њ –Ї–Њ—В–Є—А–Њ–≤–Ї–Є –±–µ–Ј –≥—А–∞—Д–Є–Ї–∞)
+    async function loadCurrencies() {
+      try {
+        const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
+        const data = await res.json();
+        const v = data.Valute;
+
+        function setRate(code, valId, deltaId) {
+          const item = v[code];
+          if (!item) return;
+          document.getElementById(valId).innerText = item.Value.toFixed(2) + ' вВљ';
+          if (deltaId) {
+            const diff = (item.Value - item.Previous).toFixed(2);
+            const isUp = diff >= 0;
+            const el = document.getElementById(deltaId);
+            el.innerText = (isUp ? 'вЖС+' : 'вЖУ') + diff;
+            el.className = 'curr-delta ' + (isUp ? 'delta-up' : 'delta-down');
+          }
+        }
+        setRate('USD', 'usd-val', 'usd-delta');
+        setRate('EUR', 'eur-val', 'eur-delta');
+        setRate('CNY', 'cny-val', 'cny-delta');
+      } catch (e) {
+        console.error('Currencies error:', e);
+      }
+    }
+
+    // 3. DYNAMIC YEAR PROGRESS
+    function updateYear() {
       const now = new Date();
       const year = now.getFullYear();
-      const startOfYear = new Date(year, 0, 1);
-      const endOfYear = new Date(year + 1, 0, 1);
+      const start = new Date(year, 0, 1);
+      const end = new Date(year + 1, 0, 1);
 
-      const elapsed = now - startOfYear;
-      const total = endOfYear - startOfYear;
-      const yearPct = (elapsed / total * 100).toFixed(1);
+      const elapsed = now - start;
+      const total = end - start;
+      const pct = (elapsed / total * 100).toFixed(1);
 
       const oneDay = 1000 * 60 * 60 * 24;
-      const currentDayOfYear = Math.floor(elapsed / oneDay) + 1;
-      const totalDaysInYear = Math.round(total / oneDay);
-      const daysLeft = totalDaysInYear - currentDayOfYear;
+      const day = Math.floor(elapsed / oneDay) + 1;
+      const totalDays = Math.round(total / oneDay);
+      const left = totalDays - day;
 
-      document.getElementById('timeline-title').innerText = 'вП≥ –Ґ–∞–є–Љ–ї–∞–є–љ ' + year;
-      document.getElementById('year-pct').innerText = yearPct + '%';
-      document.getElementById('year-days-info').innerText = '–і–µ–љ—М ' + currentDayOfYear + ' –Є–Ј ' + totalDaysInYear;
-      document.getElementById('year-fill').style.width = yearPct + '%';
-      document.getElementById('timeline-badge').innerText = daysLeft + ' –і–љ. –Њ—Б—В.';
-
-      // Month Progress
-      const monthIdx = now.getMonth();
-      const monthName = MONTHS[monthIdx];
-      const startOfMonth = new Date(year, monthIdx, 1);
-      const endOfMonth = new Date(year, monthIdx + 1, 1);
-      const daysInMonth = Math.round((endOfMonth - startOfMonth) / oneDay);
-      const currentDayOfMonth = now.getDate();
-      const monthPct = Math.round((currentDayOfMonth / daysInMonth) * 100);
-
-      document.getElementById('month-name').innerText = monthName + ' ¬Ј ' + currentDayOfMonth + ' –Є–Ј ' + daysInMonth + ' –і–љ.';
-      document.getElementById('month-fill').style.width = monthPct + '%';
-      document.getElementById('month-pct').innerText = monthPct + '%';
+      document.getElementById('year-title').innerText = year + ' –У–Ю–Ф';
+      document.getElementById('year-pct').innerText = pct + '%';
+      document.getElementById('year-fill').style.width = pct + '%';
+      document.getElementById('year-left').innerText = left + ' –і–љ. –Њ—Б—В.';
     }
 
     loadWeather();
-    updateTimeline();
+    loadCurrencies();
+    updateYear();
 
     // Auto refresh every 10 min
     setInterval(() => {
       loadWeather();
-      updateTimeline();
+      loadCurrencies();
+      updateYear();
     }, 600000);
   </script>
 </body>
