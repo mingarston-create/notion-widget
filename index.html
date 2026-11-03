@@ -12,6 +12,8 @@
       --text-main: #37352f;
       --text-sub: #787774;
       --divider: #ebebeb;
+      --tile-bg: #fbfbfa;
+      --tile-hover: #f1f1ef;
       --bar-bg: #e5e5e5;
       --bar-fill: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
       --red: #e11d48;
@@ -20,6 +22,8 @@
       --green-bg: #d1fae5;
       --blue: #2563eb;
       --blue-bg: #dbeafe;
+      --amber: #d97706;
+      --amber-bg: #fef3c7;
       --pill-bg: #f7f6f3;
     }
 
@@ -31,6 +35,8 @@
         --text-main: #ffffff;
         --text-sub: #9b9b9b;
         --divider: #333333;
+        --tile-bg: #272727;
+        --tile-hover: #303030;
         --bar-bg: #333333;
         --bar-fill: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
         --red: #f43f5e;
@@ -39,6 +45,8 @@
         --green-bg: #133e2c;
         --blue: #60a5fa;
         --blue-bg: #1e3a5f;
+        --amber: #fbbf24;
+        --amber-bg: #451a03;
         --pill-bg: #2a2a2a;
       }
     }
@@ -53,48 +61,48 @@
 
     body {
       background: transparent;
-      padding: 3px 1px;
+      padding: 4px 2px;
       overflow: hidden;
     }
 
     .dashboard-bar {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 8px 12px;
+      border-radius: 18px;
+      padding: 12px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 14px;
       max-width: 100%;
       margin: 0 auto;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-      min-height: 72px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      min-height: 98px;
     }
 
     .divider {
       width: 1px;
-      height: 38px;
+      height: 56px;
       background: var(--divider);
       flex-shrink: 0;
     }
 
-    /* 1. WEATHER POD */
+    /* 1. WEATHER (Компактно и аккуратно) */
     .weather-pod {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       flex-shrink: 0;
     }
 
     .weather-main {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .weather-icon {
-      font-size: 26px;
+      font-size: 28px;
       line-height: 1;
     }
 
@@ -104,7 +112,7 @@
     }
 
     .weather-temp {
-      font-size: 19px;
+      font-size: 20px;
       font-weight: 800;
       letter-spacing: -0.02em;
       line-height: 1.1;
@@ -116,6 +124,7 @@
       color: var(--text-sub);
       font-weight: 600;
       white-space: nowrap;
+      margin-top: 2px;
     }
 
     .weather-forecast {
@@ -126,7 +135,7 @@
 
     .forecast-card {
       background: var(--pill-bg);
-      padding: 3px 6px;
+      padding: 4px 6px;
       border-radius: 6px;
       display: flex;
       flex-direction: column;
@@ -135,7 +144,7 @@
       font-size: 9px;
       font-weight: 600;
       color: var(--text-sub);
-      min-width: 34px;
+      min-width: 32px;
     }
 
     .forecast-card .f-temp {
@@ -144,7 +153,7 @@
       color: var(--text-main);
     }
 
-    /* 2. CURRENCIES POD */
+    /* 2. CURRENCIES (Компактно) */
     .currency-pod {
       display: flex;
       align-items: center;
@@ -154,53 +163,46 @@
     .curr-col {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
     }
 
     .curr-row {
       display: flex;
       align-items: center;
-      gap: 4px;
-      font-size: 10px;
+      gap: 5px;
+      font-size: 10.5px;
       line-height: 1.2;
     }
 
     .curr-code {
-      font-size: 9px;
+      font-size: 9.5px;
       font-weight: 700;
       color: var(--text-sub);
-      width: 22px;
+      width: 24px;
     }
 
     .curr-value {
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 800;
       color: var(--text-main);
-      min-width: 44px;
+      min-width: 48px;
     }
 
     .curr-delta {
       font-size: 9px;
       font-weight: 700;
-      padding: 0px 3px;
+      padding: 1px 4px;
       border-radius: 3px;
     }
 
-    .delta-up {
-      color: var(--red);
-      background: var(--red-bg);
-    }
+    .delta-up { color: var(--red); background: var(--red-bg); }
+    .delta-down { color: var(--green); background: var(--green-bg); }
 
-    .delta-down {
-      color: var(--green);
-      background: var(--green-bg);
-    }
-
-    /* 3. YEAR PROGRESS POD */
+    /* 3. YEAR PROGRESS */
     .year-pod {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 5px;
       flex-shrink: 0;
     }
 
@@ -212,20 +214,20 @@
     }
 
     .year-title {
-      font-size: 9px;
+      font-size: 9.5px;
       font-weight: 700;
       color: var(--text-sub);
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
     }
 
     .year-left-chip {
       font-size: 9px;
-      font-weight: 600;
-      color: var(--text-sub);
-      background: var(--pill-bg);
-      padding: 1px 4px;
-      border-radius: 3px;
+      font-weight: 700;
+      color: var(--amber);
+      background: var(--amber-bg);
+      padding: 1px 5px;
+      border-radius: 4px;
       white-space: nowrap;
     }
 
@@ -236,7 +238,7 @@
     }
 
     .year-pct-big {
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 800;
       color: var(--text-main);
       line-height: 1;
@@ -257,62 +259,105 @@
       transition: width 1s ease-out;
     }
 
-    /* 4. TASKS POD */
-    .tasks-pod {
+    /* 4. TASKS HERO POD (ГЛАВНАЯ ПЛИТКА - Высокая, просторная, солидная) */
+    .tasks-hero {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-left: 6px;
+      height: 100%;
+    }
+
+    .task-hero-card {
+      background: var(--tile-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 13px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      cursor: default;
+      min-width: 0;
+    }
+
+    .task-hero-card:hover {
+      transform: translateY(-2px);
+      background: var(--tile-hover);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border-color: rgba(0,0,0,0.12);
+    }
+
+    .task-hero-header {
       display: flex;
       align-items: center;
-      gap: 5px;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .task-hero-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .task-hero-badge {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
       flex-shrink: 0;
     }
 
-    .task-card {
-      background: var(--pill-bg);
-      border-radius: 8px;
-      padding: 4px 7px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1px;
-      min-width: 44px;
-      transition: transform 0.15s ease;
-    }
-
-    .task-card:hover {
-      transform: translateY(-1px);
-    }
-
-    .task-header {
-      font-size: 9px;
-      font-weight: 700;
-      color: var(--text-sub);
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      white-space: nowrap;
-    }
-
-    .task-num {
-      font-size: 15px;
+    .task-hero-num {
+      font-size: 24px;
       font-weight: 800;
       line-height: 1.1;
+      margin-top: 4px;
+      letter-spacing: -0.02em;
     }
 
+    .task-hero-sub {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .badge-burning { background: var(--red-bg); color: var(--red); }
     .num-burning { color: var(--red); }
+
+    .badge-progress { background: var(--blue-bg); color: var(--blue); }
     .num-progress { color: var(--blue); }
+
+    .badge-todo { background: var(--pill-bg); color: var(--text-sub); }
     .num-todo { color: var(--text-main); }
+
+    .badge-done { background: var(--green-bg); color: var(--green); }
     .num-done { color: var(--green); }
+
+    @media (max-width: 920px) {
+      .weather-forecast { display: none; }
+      .task-hero-badge { display: none; }
+    }
   </style>
 </head>
 <body>
   <div class="dashboard-bar">
 
-    <!-- 1. WEATHER -->
+    <!-- 1. WEATHER (Компактный) -->
     <div class="weather-pod">
       <div class="weather-main">
         <div class="weather-icon" id="w-icon">⛅</div>
         <div class="weather-temp-wrap">
-          <div class="weather-temp" id="w-temp">+2°C</div>
-          <div class="weather-meta" id="w-desc">Москва · Пасмурно</div>
+          <div class="weather-temp" id="w-temp">+3°C</div>
+          <div class="weather-meta" id="w-desc">Москва · Дождь</div>
         </div>
       </div>
       <div class="weather-forecast" id="w-forecast"></div>
@@ -320,7 +365,7 @@
 
     <div class="divider"></div>
 
-    <!-- 2. CURRENCIES (Без графика USD 7 ДНЕЙ) -->
+    <!-- 2. CURRENCIES (Компактный) -->
     <div class="currency-pod">
       <div class="curr-col">
         <div class="curr-row">
@@ -343,7 +388,7 @@
 
     <div class="divider"></div>
 
-    <!-- 3. YEAR PROGRESS -->
+    <!-- 3. YEAR PROGRESS (Компактный) -->
     <div class="year-pod">
       <div class="year-top">
         <span class="year-title" id="year-title">2026 ГОД</span>
@@ -359,24 +404,45 @@
 
     <div class="divider"></div>
 
-    <!-- 4. TASKS KPI -->
-    <div class="tasks-pod">
-      <div class="task-card" title="Срочные / просроченные задачи">
-        <div class="task-header">🔥 Срочно</div>
-        <div class="task-num num-burning" id="task-burning">24</div>
+    <!-- 4. TASKS HERO (ГЛАВНЫЙ РАЗДЕЛ - Высокий, просторный, солидный) -->
+    <div class="tasks-hero">
+
+      <div class="task-hero-card" title="Задачи с дедлайном и просроченные">
+        <div class="task-hero-header">
+          <span class="task-hero-label">🔥 Срочно</span>
+          <span class="task-hero-badge badge-burning">Дедлайн</span>
+        </div>
+        <div class="task-hero-num num-burning" id="task-burning">24</div>
+        <div class="task-hero-sub">просрочено</div>
       </div>
-      <div class="task-card" title="Задачи в работе">
-        <div class="task-header">⚡ В работе</div>
-        <div class="task-num num-progress" id="task-progress">6</div>
+
+      <div class="task-hero-card" title="Задачи в текущей работе">
+        <div class="task-hero-header">
+          <span class="task-hero-label">⚡ В работе</span>
+          <span class="task-hero-badge badge-progress">Фокус</span>
+        </div>
+        <div class="task-hero-num num-progress" id="task-progress">6</div>
+        <div class="task-hero-sub">в процессе</div>
       </div>
-      <div class="task-card" title="К сдаче / в бэклоге">
-        <div class="task-header">📌 Пул</div>
-        <div class="task-num num-todo" id="task-todo">114</div>
+
+      <div class="task-hero-card" title="Задачи в бэклоге и пуле">
+        <div class="task-hero-header">
+          <span class="task-hero-label">📌 К сдаче</span>
+          <span class="task-hero-badge badge-todo">Пул</span>
+        </div>
+        <div class="task-hero-num num-todo" id="task-todo">114</div>
+        <div class="task-hero-sub">в очереди</div>
       </div>
-      <div class="task-card" title="Закрыто задач">
-        <div class="task-header">✅ Готово</div>
-        <div class="task-num num-done" id="task-done">2%</div>
+
+      <div class="task-hero-card" title="Выполненные задачи">
+        <div class="task-hero-header">
+          <span class="task-hero-label">✅ Готово</span>
+          <span class="task-hero-badge badge-done">Успех</span>
+        </div>
+        <div class="task-hero-num num-done" id="task-done">2%</div>
+        <div class="task-hero-sub" id="task-done-sub">3 закрыто</div>
       </div>
+
     </div>
 
   </div>
@@ -387,12 +453,14 @@
     const b = params.get('b');
     const p = params.get('p');
     const t = params.get('t');
+    const d = params.get('d');
     const pct = params.get('pct');
 
     if (b) document.getElementById('task-burning').innerText = b;
     if (p) document.getElementById('task-progress').innerText = p;
     if (t) document.getElementById('task-todo').innerText = t;
     if (pct) document.getElementById('task-done').innerText = pct + '%';
+    if (d) document.getElementById('task-done-sub').innerText = d + ' закрыто';
 
     // 1. WEATHER LOGIC (Open-Meteo API)
     const WMO = {
