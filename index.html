@@ -1,10 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion Dashboard Bar</title>
-  <style>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Метрики задач</title><style>
     :root {
       --bg: #ffffff;
       --card-bg: #ffffff;
@@ -52,183 +47,73 @@
     }
 
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: transparent; padding: 8px; color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    .dashboard-bar {
-      --gap: 24px;
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 24px; padding: var(--gap); min-height: 240px;
-      display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(190px, 1fr) minmax(180px, 1fr) minmax(560px, 3fr);
-      gap: var(--gap); align-items: center;
-      box-shadow: 0 4px 20px rgba(0,0,0,.035);
-    }
-    .divider { display: none; }
-    .weather-pod, .year-pod, .curr-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-    .weather-main { display: flex; align-items: center; gap: 12px; }
-    .weather-icon { font-size: 40px; line-height: 1; }
-    .weather-temp { font-size: 32px; font-weight: 800; letter-spacing: -.04em; line-height: 1.1; }
-    .weather-meta { font-size: 14px; color: var(--text-sub); line-height: 1.5; margin-top: 8px; }
-    .weather-forecast { display: flex; gap: 8px; }
-    .forecast-card { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 8px; padding: 12px 8px; background: var(--pill-bg); border-radius: 12px; font-size: 14px; color: var(--text-sub); font-weight: 600; }
-    .f-temp { font-size: 18px; color: var(--text-main); font-weight: 700; }
-    .curr-row { display: grid; grid-template-columns: 32px minmax(0,1fr) auto; align-items: center; gap: 8px; }
-    .curr-code { font-size: 13px; font-weight: 700; color: var(--text-sub); }
-    .curr-value { font-size: 18px; font-weight: 750; white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .curr-delta { font-size: 12px; font-weight: 700; border-radius: 6px; padding: 4px; white-space: nowrap; }
-    .delta-up { color: var(--red); background: var(--red-bg); }
-    .delta-down { color: var(--green); background: var(--green-bg); }
-    .year-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
-    .year-title { font-size: 14px; font-weight: 700; color: var(--text-sub); letter-spacing: .04em; }
-    .year-left-chip { font-size: 12px; color: var(--text-sub); background: var(--pill-bg); border-radius: 6px; padding: 4px 8px; white-space: nowrap; }
-    .year-bar-row { display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
-    .year-pct-big { font-size: 32px; font-weight: 800; line-height: 1.1; letter-spacing: -.03em; }
-    .progress-track { width: 100%; height: 10px; border-radius: 999px; background: var(--bar-bg); overflow: hidden; }
-    .progress-fill { height: 100%; background: var(--bar-fill); border-radius: inherit; transition: width 1s ease-out; }
-    .tasks-hero { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; min-width: 0; align-self: stretch; }
-    .task-hero-card { display: flex; flex-direction: column; justify-content: center; gap: 16px; min-width: 0; min-height: 192px; padding: 20px 16px; border: 1px solid var(--card-border); border-radius: 18px; background: var(--tile-bg); }
-    .task-hero-card:nth-child(1) { background: var(--red-bg); border-color: transparent; }
-    .task-hero-card:nth-child(2) { background: var(--blue-bg); border-color: transparent; }
-    .task-hero-card:nth-child(4) { background: var(--green-bg); border-color: transparent; }
-    .task-hero-header { min-height: 24px; }
-    .task-hero-label { font-size: 16px; font-weight: 650; line-height: 1.5; white-space: nowrap; }
-    .task-hero-badge { display: none; }
-    .task-hero-num { font-size: clamp(40px, 3.6vw, 64px); line-height: 1; font-weight: 800; letter-spacing: -.045em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-    .task-hero-sub { font-size: 14px; line-height: 1.5; color: var(--text-main); opacity: .75; }
-    .num-burning { color: var(--red); }
-    .num-progress { color: var(--blue); }
-    .num-todo { color: var(--text-main); }
-    .num-done { color: var(--green); }
-    @media (max-width: 1279px) {
-      .dashboard-bar { grid-template-columns: repeat(3,minmax(0,1fr)); }
-      .tasks-hero { grid-column: 1 / -1; }
-      .task-hero-num { font-size: 56px; }
-    }
-    @media (max-width: 679px) {
-      .dashboard-bar { --gap: 16px; grid-template-columns: minmax(0,1fr); border-radius: 20px; }
-      .tasks-hero { grid-row: 1; grid-template-columns: repeat(2,minmax(0,1fr)); }
-      .task-hero-card { min-height: 176px; padding: 16px; }
-      .task-hero-num { font-size: 48px; }
-      .task-hero-label { font-size: 15px; }
-      .weather-pod, .currency-pod, .year-pod { padding-top: 16px; border-top: 1px solid var(--divider); }
-      .weather-forecast { max-width: 280px; }
-    }
-    @media (prefers-reduced-motion: reduce) { .progress-fill { transition: none; } }
-  </style>
-</head>
-<body>
-  <div class="dashboard-bar">
 
-    <!-- 1. WEATHER (Компактный) -->
-    <div class="weather-pod">
-      <div class="weather-main">
-        <div class="weather-icon" id="w-icon">⛅</div>
-        <div class="weather-temp-wrap">
-          <div class="weather-temp" id="w-temp">+3°C</div>
-          <div class="weather-meta" id="w-desc">Москва · Дождь</div>
-        </div>
-      </div>
-      <div class="weather-forecast" id="w-forecast"></div>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- 2. CURRENCIES (Компактный) -->
-    <div class="currency-pod">
-      <div class="curr-col">
-        <div class="curr-row">
-          <span class="curr-code">USD</span>
-          <span class="curr-value" id="usd-val">-- ₽</span>
-          <span class="curr-delta" id="usd-delta"></span>
-        </div>
-        <div class="curr-row">
-          <span class="curr-code">EUR</span>
-          <span class="curr-value" id="eur-val">-- ₽</span>
-          <span class="curr-delta" id="eur-delta"></span>
-        </div>
-        <div class="curr-row">
-          <span class="curr-code">CNY</span>
-          <span class="curr-value" id="cny-val">-- ₽</span>
-          <span class="curr-delta" id="cny-delta"></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- 3. YEAR PROGRESS (Компактный) -->
-    <div class="year-pod">
-      <div class="year-top">
-        <span class="year-title" id="year-title">2026 ГОД</span>
-        <span class="year-left-chip" id="year-left">-- дн. ост.</span>
-      </div>
-      <div class="year-bar-row">
-        <span class="year-pct-big" id="year-pct">--%</span>
-        <div class="progress-track">
-          <div class="progress-fill" id="year-fill" style="width: 0%;"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- 4. TASKS HERO (ГЛАВНЫЙ РАЗДЕЛ - Высокий, просторный, солидный) -->
-    <div class="tasks-hero">
-
-      <div class="task-hero-card" title="Задачи с дедлайном и просроченные">
-        <div class="task-hero-header">
-          <span class="task-hero-label">🔥 Срочно</span>
-          <span class="task-hero-badge badge-burning">Дедлайн</span>
-        </div>
-        <div class="task-hero-num num-burning" id="task-burning">24</div>
-        <div class="task-hero-sub">просрочено</div>
-      </div>
-
-      <div class="task-hero-card" title="Задачи в текущей работе">
-        <div class="task-hero-header">
-          <span class="task-hero-label">⚡ В работе</span>
-          <span class="task-hero-badge badge-progress">Фокус</span>
-        </div>
-        <div class="task-hero-num num-progress" id="task-progress">6</div>
-        <div class="task-hero-sub">в процессе</div>
-      </div>
-
-      <div class="task-hero-card" title="Задачи в бэклоге и пуле">
-        <div class="task-hero-header">
-          <span class="task-hero-label">📌 К сдаче</span>
-          <span class="task-hero-badge badge-todo">Пул</span>
-        </div>
-        <div class="task-hero-num num-todo" id="task-todo">114</div>
-        <div class="task-hero-sub">в очереди</div>
-      </div>
-
-      <div class="task-hero-card" title="Выполненные задачи">
-        <div class="task-hero-header">
-          <span class="task-hero-label">✅ Готово</span>
-          <span class="task-hero-badge badge-done">Успех</span>
-        </div>
-        <div class="task-hero-num num-done" id="task-done">3</div>
-        <div class="task-hero-sub" id="task-done-sub">2% выполнено</div>
-      </div>
-
-    </div>
-
-  </div>
-
-  <script>
-    // 0. URL PARAMS FOR TASK METRICS
-    const params = new URLSearchParams(window.location.search);
-    const b = params.get('b');
-    const p = params.get('p');
-    const t = params.get('t');
-    const d = params.get('d');
-    const pct = params.get('pct');
-
-    if (b) document.getElementById('task-burning').innerText = b;
-    if (p) document.getElementById('task-progress').innerText = p;
-    if (t) document.getElementById('task-todo').innerText = t;
-    if (pct !== null) document.getElementById('task-done-sub').innerText = pct + '% выполнено';
-    if (d !== null) document.getElementById('task-done').innerText = d;
-
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:transparent;color:var(--text-main);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:8px}
+.dashboard{max-width:1600px;margin:auto;padding:28px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:24px}
+.heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}
+h1{font-size:16px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-sub);font-weight:700}
+.hint{font-size:15px;color:var(--text-sub)}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--card-bg);border:1px solid var(--card-border);border-radius:18px;padding:24px;min-width:0;min-height:214px;display:flex;flex-direction:column;gap:20px;transition:background .15s,border-color .15s,box-shadow .15s}
+.card:hover{background:var(--tile-bg);border-color:var(--text-sub)}
+.card[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.card:focus-visible{outline:3px solid var(--blue);outline-offset:5px}
+.urgent{--accent:var(--red);--tint:var(--red-bg)}.active{--accent:var(--blue);--tint:var(--blue-bg)}.pool{--accent:var(--text-sub);--tint:var(--pill-bg)}.done{--accent:var(--green);--tint:var(--green-bg)}
+.card-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.icon{font-size:32px;line-height:1}
+.badge{color:var(--accent);background:var(--tint);font-size:16px;padding:6px 10px;border-radius:8px;white-space:nowrap}
+.value-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.number{font-size:clamp(48px,5vw,72px);font-weight:780;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.caption{font-size:20px;line-height:1.25;color:var(--text-sub)}
+.done-track{height:6px;background:var(--bar-bg);border-radius:99px;overflow:hidden;margin-top:auto}.done-fill{height:100%;background:var(--green);width:0}
+.detail{display:flex;align-items:flex-start;gap:12px;margin-top:24px;padding:20px;border-radius:12px;background:var(--tile-bg);min-height:88px;font-size:19px;line-height:1.5;color:var(--text-sub)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--text-sub);flex:none;margin-top:10px}
+.context{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-top:24px;padding-top:20px;border-top:1px solid var(--divider)}
+.weather-main,.year-pod,.year-top,.year-bar-row{display:flex;align-items:center;gap:12px}
+.weather-temp-wrap{display:flex;align-items:baseline;gap:12px}.weather-icon{font-size:28px}.weather-temp{font-size:24px;font-weight:750}.weather-meta,.year-title,.year-left-chip{font-size:15px;color:var(--text-sub)}
+.year-pct-big{font-size:24px;font-weight:750}.progress-track{height:7px;width:90px;background:var(--bar-bg);border-radius:99px;overflow:hidden}.progress-fill{height:100%;background:var(--bar-fill)}
+@media(max-width:1050px){.card{padding:20px;min-height:200px}.cards{gap:16px}.badge{font-size:14px}.caption{font-size:18px}.context{flex-wrap:wrap}.year-pod{flex-wrap:wrap}}
+@media(max-width:760px){.dashboard{padding:20px}.heading{align-items:flex-start;flex-direction:column;gap:8px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.number{font-size:56px}.card{min-height:200px}.detail{font-size:17px}.weather-temp-wrap{flex-wrap:wrap;gap:6px}}
+@media(max-width:380px){.dashboard{padding:12px}.cards{gap:12px}.card{padding:14px}.badge{font-size:12px;padding:6px}.icon{font-size:26px}.number{font-size:46px}.caption{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.card{transition:none}}
+</style></head><body>
+<main class="dashboard">
+<header class="heading"><h1>📊 Метрики задач</h1><p class="hint">Нажми на карточку — покажу пояснение</p></header>
+<section class="cards" aria-label="Показатели задач">
+<button type="button" class="card urgent" data-metric="urgent" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">🔥</span><span class="badge">Срочно</span></span><span class="number" id="task-burning">24</span><span class="caption">Сегодня и просрочено</span></button>
+<button type="button" class="card active" data-metric="active" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">⚡</span><span class="badge">Фокус</span></span><span class="number" id="task-progress">6</span><span class="caption">В работе</span></button>
+<button type="button" class="card pool" data-metric="pool" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">📌</span><span class="badge">Пул</span></span><span class="number" id="task-todo">114</span><span class="caption">К выполнению</span></button>
+<button type="button" class="card done" data-metric="done" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">✅</span><span class="badge" id="task-done-sub">3 закрыто</span></span><span class="number" id="task-done">2%</span><span class="caption">Выполнено</span><span class="done-track" aria-hidden="true"><span class="done-fill" id="done-fill" style="display:block"></span></span></button>
+</section>
+<div class="detail" id="metric-detail" role="status" aria-live="polite" aria-atomic="true"><span class="dot" id="detail-dot" aria-hidden="true"></span><p id="detail-text">Выбери показатель выше, чтобы увидеть, что он означает.</p></div>
+<footer class="context">
+<div class="weather-main"><span class="weather-icon" id="w-icon">⛅</span><div class="weather-temp-wrap"><span class="weather-temp" id="w-temp">—°C</span><span class="weather-meta" id="w-desc">Москва · загрузка</span></div></div>
+<div class="year-pod"><div class="year-top"><span class="year-title" id="year-title">Год</span><span class="year-left-chip" id="year-left">— дн. ост.</span></div><div class="year-bar-row"><span class="year-pct-big" id="year-pct">—%</span><div class="progress-track"><div class="progress-fill" id="year-fill"></div></div></div></div>
+</footer></main>
+<script>
+const params = new URLSearchParams(location.search);
+function metric(key,fallback){const raw=params.get(key);if(raw===null||raw.trim()==='')return fallback;const n=Number(raw);return Number.isFinite(n)&&n>=0?n:fallback}
+const metrics={urgent:Math.floor(metric('b',24)),active:Math.floor(metric('p',6)),pool:Math.floor(metric('t',114)),done:Math.floor(metric('d',3)),pct:Math.min(100,metric('pct',2))};
+document.getElementById('task-burning').textContent=metrics.urgent;
+document.getElementById('task-progress').textContent=metrics.active;
+document.getElementById('task-todo').textContent=metrics.pool;
+document.getElementById('task-done').textContent=metrics.pct+'%';
+document.getElementById('task-done-sub').textContent=metrics.done+' закрыто';
+document.getElementById('done-fill').style.width=metrics.pct+'%';
+const explanations={
+urgent:()=> 'Сегодня и просрочено: '+metrics.urgent+'. Задачи, которым нужно уделить внимание в первую очередь.',
+active:()=> 'В работе: '+metrics.active+'. Задачи, которые уже начаты и сейчас находятся в процессе.',
+pool:()=> 'К выполнению: '+metrics.pool+'. Задачи в очереди — из них можно выбрать следующий шаг.',
+done:()=> 'Закрыто задач: '+metrics.done+'. Выполнено '+metrics.pct+'%. Показатели берутся из параметров ссылки виджета.'
+};
+const colors={urgent:'var(--red)',active:'var(--blue)',pool:'var(--text-sub)',done:'var(--green)'};
+document.querySelectorAll('[data-metric]').forEach(button=>button.addEventListener('click',()=>{
+const key=button.dataset.metric;
+document.querySelectorAll('[data-metric]').forEach(card=>card.setAttribute('aria-pressed',String(card===button)));
+document.getElementById('detail-text').textContent=explanations[key]();
+document.getElementById('detail-dot').style.background=colors[key];
+}));
     // 1. WEATHER LOGIC (Open-Meteo API)
     const WMO = {
       0: { icon: '☀️', text: 'Ясно' },
@@ -266,52 +151,8 @@
         document.getElementById('w-icon').innerText = wInfo.icon;
         document.getElementById('w-desc').innerText = 'Москва · ' + wInfo.text;
 
-        const fc = document.getElementById('w-forecast');
-        fc.innerHTML = '';
-        for (let i = 1; i <= 2; i++) {
-          const date = new Date(data.daily.time[i]);
-          const day = DAYS[date.getDay()];
-          const fCode = data.daily.weathercode[i];
-          const icon = (WMO[fCode] && WMO[fCode].icon) || '⛅';
-          const maxT = Math.round(data.daily.temperature_2m_max[i]);
-
-          const card = document.createElement('div');
-          card.className = 'forecast-card';
-          card.innerHTML = `
-            <span>${day} ${icon}</span>
-            <span class="f-temp">${maxT > 0 ? '+' : ''}${maxT}°</span>
-          `;
-          fc.appendChild(card);
-        }
       } catch (e) {
         console.error('Weather error:', e);
-      }
-    }
-
-    // 2. CURRENCIES (ЦБ РФ API)
-    async function loadCurrencies() {
-      try {
-        const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
-        const data = await res.json();
-        const v = data.Valute;
-
-        function setRate(code, valId, deltaId) {
-          const item = v[code];
-          if (!item) return;
-          document.getElementById(valId).innerText = item.Value.toFixed(2) + ' ₽';
-          if (deltaId) {
-            const diff = (item.Value - item.Previous).toFixed(2);
-            const isUp = diff >= 0;
-            const el = document.getElementById(deltaId);
-            el.innerText = (isUp ? '↑+' : '↓') + diff;
-            el.className = 'curr-delta ' + (isUp ? 'delta-up' : 'delta-down');
-          }
-        }
-        setRate('USD', 'usd-val', 'usd-delta');
-        setRate('EUR', 'eur-val', 'eur-delta');
-        setRate('CNY', 'cny-val', 'cny-delta');
-      } catch (e) {
-        console.error('Currencies error:', e);
       }
     }
 
@@ -338,15 +179,12 @@
     }
 
     loadWeather();
-    loadCurrencies();
+
     updateYear();
 
     setInterval(() => {
       loadWeather();
-      loadCurrencies();
+
       updateYear();
     }, 600000);
-  </script>
-</body>
-</html>
-
+  </script></body></html>
