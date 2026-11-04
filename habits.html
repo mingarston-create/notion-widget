@@ -54,21 +54,28 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
     body {
       background: transparent;
       color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 6px;
+      margin: 0;
       user-select: none;
     }
 
     .dashboard {
       max-width: 1600px;
       margin: auto;
-      padding: 12px 18px;
+      padding: 12px 20px;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
+      border-radius: 20px;
+      min-height: calc(100% - 12px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
     }
 
     .heading {
@@ -76,7 +83,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .title-wrap {
@@ -86,8 +93,8 @@
     }
 
     h1 {
-      font-size: 13.5px;
-      letter-spacing: .08em;
+      font-size: 14px;
+      letter-spacing: .09em;
       text-transform: uppercase;
       color: var(--text-sub);
       font-weight: 700;
@@ -96,13 +103,22 @@
     .header-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
+    }
+
+    .reset-chip {
+      font-size: 11px;
+      color: var(--text-sub);
+      background: var(--pill-bg);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 500;
     }
 
     .date-badge {
       font-size: 12.5px;
       color: var(--text-sub);
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .progress-pill {
@@ -116,7 +132,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 10px;
     }
 
@@ -126,29 +142,36 @@
       font: inherit;
       color: inherit;
       cursor: pointer;
-      background: var(--tile-bg);
+      background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 13px;
+      border-radius: 14px;
       padding: 10px 14px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
+      gap: 6px;
+      transition: background .15s, border-color .15s, transform .12s, box-shadow .15s;
       position: relative;
+      min-height: 100px;
     }
 
     .habit-card:hover {
-      background: var(--tile-hover);
+      background: var(--tile-bg);
+      border-color: var(--text-sub);
       transform: translateY(-1px);
     }
 
     .habit-card:active {
-      transform: scale(0.98);
+      transform: scale(0.97);
     }
 
     .habit-card.completed {
       background: var(--green-bg);
       border-color: var(--green-border);
+      opacity: 0.85;
+    }
+
+    .habit-card.completed:hover {
+      opacity: 1;
     }
 
     .card-top {
@@ -164,9 +187,9 @@
     }
 
     .habit-badge {
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 600;
-      padding: 2px 7px;
+      padding: 3px 7px;
       border-radius: 6px;
       color: var(--text-sub);
       background: var(--pill-bg);
@@ -181,7 +204,7 @@
 
     .habit-title {
       font-size: 13.5px;
-      font-weight: 650;
+      font-weight: 700;
       line-height: 1.25;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -192,9 +215,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 11px;
+      font-size: 11.5px;
       color: var(--text-sub);
       margin-top: auto;
+      padding-top: 4px;
     }
 
     .weekly-dots {
@@ -212,6 +236,52 @@
 
     .dot.filled {
       background: var(--green);
+    }
+
+    .all-done-banner {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      background: var(--green-bg);
+      border: 1px solid var(--green-border);
+      border-radius: 14px;
+    }
+
+    .all-done-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .all-done-title {
+      font-size: 15px;
+      font-weight: 750;
+      color: var(--text-main);
+      margin-bottom: 2px;
+    }
+
+    .all-done-sub {
+      font-size: 12.5px;
+      color: var(--text-sub);
+    }
+
+    .completed-section {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--divider);
+    }
+
+    .completed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 8px;
     }
 
     .footer-bar {
@@ -241,55 +311,103 @@
       transition: width .3s ease;
     }
 
-    @media (max-width: 900px) {
-      .grid { grid-template-columns: repeat(2, 1fr); }
+    .toggle-btn {
+      appearance: none;
+      background: var(--pill-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s;
     }
 
-    @media (max-width: 600px) {
-      .dashboard { padding: 8px 12px; border-radius: 14px; }
-      .heading { margin-bottom: 8px; }
+    .toggle-btn:hover {
+      background: var(--tile-hover);
+    }
+
+    @media(max-width: 760px) {
+      body { padding: 4px; }
+      .dashboard {
+        padding: 8px 12px;
+        border-radius: 14px;
+        min-height: calc(100% - 8px);
+      }
+      .heading { margin-bottom: 6px; }
       .grid {
         display: flex;
         overflow-x: auto;
         gap: 8px;
-        padding-bottom: 4px;
+        padding-bottom: 2px;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
       }
       .grid::-webkit-scrollbar { display: none; }
       .habit-card {
-        flex: 0 0 135px;
-        min-width: 135px;
+        flex: 0 0 132px;
+        min-width: 132px;
+        min-height: 92px;
         padding: 8px 10px;
-        gap: 6px;
+        gap: 4px;
+        border-radius: 11px;
       }
-      .habit-icon { font-size: 20px; }
-      .habit-title { font-size: 12.5px; }
-      .habit-badge { font-size: 10px; padding: 2px 5px; }
-      .footer-bar { margin-top: 6px; padding-top: 6px; font-size: 11px; }
+      .card-top { gap: 4px; }
+      .habit-icon { font-size: 18px; }
+      .habit-badge { font-size: 10px; padding: 2px 5px; border-radius: 6px; }
+      .habit-title { font-size: 12px; }
+      .habit-sub { font-size: 10.5px; padding-top: 2px; }
+      .footer-bar { margin-top: 6px; padding-top: 6px; font-size: 11px; gap: 8px; }
+      .all-done-banner { padding: 10px 14px; gap: 10px; border-radius: 11px; }
+      .all-done-icon { font-size: 24px; }
+      .all-done-title { font-size: 13px; }
+      .all-done-sub { font-size: 11px; }
     }
   </style>
 </head>
 <body>
   <main class="dashboard">
-    <header class="heading">
-      <div class="title-wrap">
-        <h1>🌱 Привычки & Ритуалы</h1>
-      </div>
-      <div class="header-right">
-        <span class="date-badge" id="current-date">—</span>
-        <span class="progress-pill" id="progress-text">0 / 8</span>
-      </div>
-    </header>
+    <div>
+      <header class="heading">
+        <div class="title-wrap">
+          <h1>🌱 Привычки & Ритуалы</h1>
+        </div>
+        <div class="header-right">
+          <span class="reset-chip" title="Обновление каждый день в 03:00">сброс в 03:00</span>
+          <span class="date-badge" id="current-date">—</span>
+          <span class="progress-pill" id="progress-text">0 / 8</span>
+        </div>
+      </header>
 
-    <section class="grid" id="habits-grid">
-      <!-- Habits will be rendered by JS -->
-    </section>
+      <!-- Active Habits (only uncompleted for today) -->
+      <section class="grid" id="active-grid" aria-label="Привычки на сегодня">
+        <!-- Rendered by JS -->
+      </section>
+
+      <!-- Completed Habits (hidden by default) -->
+      <section class="completed-section" id="completed-section" style="display:none;">
+        <div class="completed-header">
+          <span>Выполнено сегодня (нажми для отмены)</span>
+          <span id="completed-count-label">0</span>
+        </div>
+        <div class="grid" id="completed-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+    </div>
 
     <footer class="footer-bar">
       <span>Прогресс: <strong id="pct-label" style="color:var(--text-main);">0%</strong></span>
       <div class="track"><div class="fill" id="total-fill"></div></div>
-      <span id="summary-label">0 из 8 выполнено</span>
+      <button type="button" class="toggle-btn" id="toggle-completed-btn" onclick="toggleCompletedTray()" style="display:none;">
+        <span id="toggle-icon">👁️</span>
+        <span id="toggle-text">Скрыто: 0</span>
+      </button>
+      <span id="summary-label">0 из 8</span>
     </footer>
   </main>
 
@@ -305,21 +423,29 @@
       { id: 'meditation', icon: '🧘', title: 'Медитация', type: 'weekly', goal: 1, label: '1 р/нед' }
     ];
 
-    const STORAGE_KEY = 'notion_habits_v1';
+    const STORAGE_KEY = 'notion_habits_v2';
+    let showCompletedTray = false;
+
+    // Shift time by -3 hours so new day begins at 03:00 AM sharp
+    function getEffectiveNow() {
+      return new Date(Date.now() - 3 * 3600 * 1000);
+    }
 
     function getTodayKey() {
-      const now = new Date();
-      return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      const d = getEffectiveNow();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
     function getWeekKey() {
-      const now = new Date();
-      const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-      const dayNum = d.getUTCDay() || 7;
-      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-      const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-      return d.getUTCFullYear() + '-W' + String(weekNo).padStart(2, '0');
+      const d = getEffectiveNow();
+      const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const day = (date.getDay() + 6) % 7 + 1; // 1 (Mon) - 7 (Sun)
+      date.setDate(date.getDate() - day + 4); // Thursday of this week
+      const year = date.getFullYear();
+      const firstJan = new Date(year, 0, 1);
+      const daysSinceFirstJan = Math.round((date - firstJan) / 86400000);
+      const weekNo = Math.floor(daysSinceFirstJan / 7) + 1;
+      return year + '-W' + String(weekNo).padStart(2, '0');
     }
 
     function loadState() {
@@ -333,14 +459,20 @@
       };
 
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('notion_habits_v1');
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed.lastDay === todayKey) {
             state.daily = parsed.daily || {};
           }
-          if (parsed.lastWeek === weekKey) {
-            state.weekly = parsed.weekly || {};
+          if (parsed.lastWeek === weekKey && parsed.weekly) {
+            for (const [k, v] of Object.entries(parsed.weekly)) {
+              if (typeof v === 'number') {
+                state.weekly[k] = { count: v, lastDoneDay: parsed.lastDay === todayKey ? todayKey : null };
+              } else if (v && typeof v === 'object') {
+                state.weekly[k] = v;
+              }
+            }
           }
         }
       } catch (e) {
@@ -361,93 +493,80 @@
       }
     }
 
-    function toggleHabit(id) {
+    function isHabitDoneToday(h) {
+      if (h.type === 'daily') {
+        return !!appState.daily[h.id];
+      }
+      const w = appState.weekly[h.id] || { count: 0, lastDoneDay: null };
+      const todayKey = getTodayKey();
+      return w.lastDoneDay === todayKey || w.count >= h.goal;
+    }
+
+    function completeHabit(id) {
       const conf = HABIT_CONFIG.find(h => h.id === id);
       if (!conf) return;
 
+      const todayKey = getTodayKey();
       if (conf.type === 'daily') {
-        appState.daily[id] = !appState.daily[id];
-      } else if (conf.type === 'weekly') {
-        const current = appState.weekly[id] || 0;
-        if (current >= conf.goal) {
-          appState.weekly[id] = 0;
-        } else {
-          appState.weekly[id] = current + 1;
-        }
+        appState.daily[id] = true;
+      } else {
+        const cur = appState.weekly[id] || { count: 0, lastDoneDay: null };
+        appState.weekly[id] = {
+          count: Math.min(conf.goal, (cur.count || 0) + 1),
+          lastDoneDay: todayKey
+        };
       }
-
       saveState();
       render();
     }
 
-    function render() {
-      const grid = document.getElementById('habits-grid');
-      grid.innerHTML = '';
+    function uncompleteHabit(id) {
+      const conf = HABIT_CONFIG.find(h => h.id === id);
+      if (!conf) return;
 
-      let completedCount = 0;
-
-      HABIT_CONFIG.forEach(h => {
-        let isDone = false;
-        let badgeText = h.label;
-        let subHtml = '';
-
-        if (h.type === 'daily') {
-          isDone = !!appState.daily[h.id];
-          if (isDone) {
-            completedCount++;
-            badgeText = 'Сделано ✅';
-          }
-          subHtml = `<span style="color:${isDone ? 'var(--green)' : 'var(--text-sub)'}">${isDone ? 'Закрыто сегодня' : 'Надо сделать'}</span>`;
-        } else {
-          const count = appState.weekly[h.id] || 0;
-          isDone = count >= h.goal;
-          if (isDone) {
-            completedCount++;
-            badgeText = count + '/' + h.goal + ' 🎉';
-          } else {
-            badgeText = count + '/' + h.goal;
-          }
-
-          let dots = '';
-          for (let i = 0; i < h.goal; i++) {
-            dots += `<span class="dot ${i < count ? 'filled' : ''}"></span>`;
-          }
-          subHtml = `<div class="weekly-dots">${dots}</div><span>${isDone ? 'План закрыт' : 'Недельная цель'}</span>`;
-        }
-
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'habit-card ' + (isDone ? 'completed' : '');
-        card.setAttribute('aria-label', h.title);
-        card.onclick = () => toggleHabit(h.id);
-
-        card.innerHTML = `
-          <div class="card-top">
-            <span class="habit-icon">${h.icon}</span>
-            <span class="habit-badge">${badgeText}</span>
-          </div>
-          <div class="habit-title">${h.title}</div>
-          <div class="habit-sub">${subHtml}</div>
-        `;
-
-        grid.appendChild(card);
-      });
-
-      const total = HABIT_CONFIG.length;
-      const pct = Math.round((completedCount / total) * 100);
-
-      document.getElementById('progress-text').innerText = completedCount + ' / ' + total;
-      document.getElementById('pct-label').innerText = pct + '%';
-      document.getElementById('summary-label').innerText = completedCount + ' из ' + total + ' выполнено';
-      document.getElementById('total-fill').style.width = pct + '%';
+      if (conf.type === 'daily') {
+        appState.daily[id] = false;
+      } else {
+        const cur = appState.weekly[id] || { count: 0, lastDoneDay: null };
+        appState.weekly[id] = {
+          count: Math.max(0, (cur.count || 0) - 1),
+          lastDoneDay: null
+        };
+      }
+      saveState();
+      render();
     }
 
-    const now = new Date();
-    const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-    const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-    document.getElementById('current-date').innerText = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
+    function toggleCompletedTray() {
+      showCompletedTray = !showCompletedTray;
+      render();
+    }
 
-    render();
-  </script>
-</body>
-</html>
+    function createCard(h, isCompleted) {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'habit-card ' + (isCompleted ? 'completed' : '');
+      card.setAttribute('aria-label', h.title + (isCompleted ? ' (выполнено)' : ''));
+      card.onclick = () => isCompleted ? uncompleteHabit(h.id) : completeHabit(h.id);
+
+      let badgeText = h.label;
+      let subHtml = '';
+
+      if (h.type === 'daily') {
+        if (isCompleted) {
+          badgeText = 'Сделано ✅';
+          subHtml = '<span style="color:var(--green)">Закрыто · нажми для отмены</span>';
+        } else {
+          badgeText = 'Каждый день';
+          subHtml = '<span>Надо сделать</span>';
+        }
+      } else {
+        const w = appState.weekly[h.id] || { count: 0, lastDoneDay: null };
+        const count = w.count || 0;
+        let dots = '';
+        for (let i = 0; i < h.goal; i++) {
+          dots += `<span class="dot ${i < count ? 'filled' : ''}"></span>`;
+        }
+
+        if (isCompleted) {
+          badgeText = count + '/' + h.goal +
