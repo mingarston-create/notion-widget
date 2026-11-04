@@ -89,7 +89,7 @@
     .title-wrap {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     h1 {
@@ -100,40 +100,25 @@
       font-weight: 700;
     }
 
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .reset-chip {
-      font-size: 11px;
-      color: var(--text-sub);
-      background: var(--pill-bg);
-      padding: 2px 7px;
-      border-radius: 6px;
-      font-weight: 500;
-    }
-
     .date-badge {
-      font-size: 12.5px;
-      color: var(--text-sub);
-      font-weight: 600;
-    }
-
-    .progress-pill {
       font-size: 12px;
-      font-weight: 700;
-      color: var(--green);
-      background: var(--green-bg);
-      padding: 3px 8px;
-      border-radius: 99px;
+      color: var(--text-sub);
+      font-weight: 500;
+      background: var(--pill-bg);
+      padding: 2px 8px;
+      border-radius: 6px;
     }
 
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      display: flex;
+      overflow-x: auto;
       gap: 10px;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .grid::-webkit-scrollbar {
+      display: none;
     }
 
     .habit-card {
@@ -151,7 +136,9 @@
       gap: 6px;
       transition: background .15s, border-color .15s, transform .12s, box-shadow .15s;
       position: relative;
-      min-height: 100px;
+      flex: 0 0 148px;
+      min-width: 148px;
+      min-height: 96px;
     }
 
     .habit-card:hover {
@@ -187,9 +174,9 @@
     }
 
     .habit-badge {
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 600;
-      padding: 3px 7px;
+      padding: 2px 7px;
       border-radius: 6px;
       color: var(--text-sub);
       background: var(--pill-bg);
@@ -215,7 +202,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 11.5px;
+      font-size: 11px;
       color: var(--text-sub);
       margin-top: auto;
       padding-top: 4px;
@@ -239,30 +226,30 @@
     }
 
     .all-done-banner {
-      grid-column: 1 / -1;
+      width: 100%;
       display: flex;
       align-items: center;
       gap: 14px;
-      padding: 16px 20px;
+      padding: 14px 18px;
       background: var(--green-bg);
       border: 1px solid var(--green-border);
       border-radius: 14px;
     }
 
     .all-done-icon {
-      font-size: 32px;
+      font-size: 28px;
       line-height: 1;
     }
 
     .all-done-title {
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 750;
       color: var(--text-main);
       margin-bottom: 2px;
     }
 
     .all-done-sub {
-      font-size: 12.5px;
+      font-size: 12px;
       color: var(--text-sub);
     }
 
@@ -340,14 +327,9 @@
       }
       .heading { margin-bottom: 6px; }
       .grid {
-        display: flex;
-        overflow-x: auto;
         gap: 8px;
         padding-bottom: 2px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
       }
-      .grid::-webkit-scrollbar { display: none; }
       .habit-card {
         flex: 0 0 132px;
         min-width: 132px;
@@ -375,11 +357,7 @@
       <header class="heading">
         <div class="title-wrap">
           <h1>🌱 Привычки & Ритуалы</h1>
-        </div>
-        <div class="header-right">
-          <span class="reset-chip" title="Обновление каждый день в 03:00">сброс в 03:00</span>
           <span class="date-badge" id="current-date">—</span>
-          <span class="progress-pill" id="progress-text">0 / 8</span>
         </div>
       </header>
 
@@ -646,7 +624,6 @@
       const total = HABIT_CONFIG.length;
       const pct = Math.round((completedCount / total) * 100);
 
-      document.getElementById('progress-text').innerText = completedCount + ' / ' + total;
       document.getElementById('pct-label').innerText = pct + '%';
       document.getElementById('summary-label').innerText = completedCount + ' из ' + total;
       document.getElementById('total-fill').style.width = pct + '%';
@@ -657,6 +634,18 @@
       const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
       document.getElementById('current-date').innerText = days[nowEff.getDay()] + ', ' + nowEff.getDate() + ' ' + months[nowEff.getMonth()];
     }
+
+    // Horizontal wheel scroll support for traditional mice
+    ['active-grid', 'completed-grid'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('wheel', (e) => {
+          if (e.deltaY !== 0 && e.deltaX === 0) {
+            el.scrollLeft += e.deltaY;
+          }
+        }, { passive: true });
+      }
+    });
 
     render();
 
