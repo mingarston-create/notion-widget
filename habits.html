@@ -391,17 +391,18 @@
 
   <script>
     const HABIT_CONFIG = [
-      { id: 'english', icon: '🇬🇧', title: 'Английский', type: 'daily', goal: 7, label: 'Каждый день' },
-      { id: 'exercise', icon: '🤸', title: 'Зарядка', type: 'daily', goal: 7, label: 'Каждый день' },
-      { id: 'shower', icon: '🚿', title: 'Контрастный душ', type: 'daily', goal: 7, label: 'Каждый день' },
-      { id: 'pushups', icon: '💪', title: 'Отжимания', type: 'daily', goal: 7, label: 'Каждый день' },
-      { id: 'squats', icon: '🦵', title: 'Приседания', type: 'daily', goal: 7, label: 'Каждый день' },
-      { id: 'pool', icon: '🏊‍♂️', title: 'Бассейн', type: 'weekly', goal: 2, label: '2 р/нед' },
-      { id: 'mouthguard', icon: '🦷', title: 'Каппа на ночь', type: 'weekly', goal: 1, label: '1 р/нед' },
-      { id: 'meditation', icon: '🧘', title: 'Медитация', type: 'weekly', goal: 1, label: '1 р/нед' }
+      { id: 'english', icon: '🇬🇧', title: 'Английский', type: 'daily', goal: 7, label: 'Каждый день', action: '15 мин практики' },
+      { id: 'exercise', icon: '🤸', title: 'Зарядка', type: 'daily', goal: 7, label: 'Каждый день', action: 'Разгони кровь' },
+      { id: 'shower', icon: '🚿', title: 'Контрастный душ', type: 'daily', goal: 7, label: 'Каждый день', action: 'Бодрый заряд' },
+      { id: 'pushups', icon: '💪', title: 'Отжимания', type: 'daily', goal: 7, label: 'Каждый день', action: 'Сделай подход' },
+      { id: 'squats', icon: '🦵', title: 'Приседания', type: 'daily', goal: 7, label: 'Каждый день', action: 'Включи ноги' },
+      { id: 'pool', icon: '🏊‍♂️', title: 'Бассейн', type: 'weekly', goal: 2, label: '2 р/нед', action: 'Время заплыва' },
+      { id: 'mouthguard', icon: '🦷', title: 'Каппа на ночь', type: 'weekly', goal: 1, label: '1 р/нед', action: 'Перед сном' },
+      { id: 'meditation', icon: '🧘', title: 'Медитация', type: 'weekly', goal: 1, label: '1 р/нед', action: 'Очисти голову' }
     ];
 
     const STORAGE_KEY = 'notion_habits_v2';
+    const CLOUD_SYNC_URL = 'https://kvdb.io/2bUaDrs1g6gpQAfdfCEZrD/notion_habits_v2';
     let showCompletedTray = false;
 
     // Shift time by -3 hours so new day begins at 03:00 AM sharp
@@ -468,6 +469,57 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       } catch (e) {
         console.error('Save error:', e);
+      }
+      // Instant cloud sync
+      pushToCloud();
+    }
+
+    async function pushToCloud() {
+      try {
+        await fetch(CLOUD_SYNC_URL, {
+          method: 'POST',
+          body: JSON.stringify(appState)
+        });
+      } catch (e) {
+        // Silent fallback
+      }
+    }
+
+    async function pullFromCloud() {
+      try {
+        const res = await fetch(CLOUD_SYNC_URL + '?_=' + Date.now());
+        if (!res.ok) return;
+        const remote = await res.json();
+        const todayKey = getTodayKey();
+        const weekKey = getWeekKey();
+
+        if (remote && remote.lastDay === todayKey) {
+          let changed = false;
+          // Merge daily
+          if (remote.daily) {
+            for (const [k, v] of Object.entries(remote.daily)) {
+              if (appState.daily[k] !== v) {
+                appState.daily[k] = v;
+                changed = true;
+              }
+            }
+          }
+          // Merge weekly
+          if (remote.lastWeek === weekKey && remote.weekly) {
+            for (const [k, v] of Object.entries(remote.weekly)) {
+              if (JSON.stringify(appState.weekly[k]) !== JSON.stringify(v)) {
+                appState.weekly[k] = v;
+                changed = true;
+              }
+            }
+          }
+          if (changed) {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch(e){}
+            render();
+          }
+        }
+      } catch (e) {
+        // Silent fallback
       }
     }
 
@@ -536,7 +588,7 @@
           subHtml = '<span style="color:var(--green)">Закрыто · нажми для отмены</span>';
         } else {
           badgeText = 'Каждый день';
-          subHtml = '<span>Надо сделать</span>';
+          subHtml = `<span>${h.action}</span>`;
         }
       } else {
         const w = appState.weekly[h.id] || { count: 0, lastDoneDay: null };
@@ -551,7 +603,7 @@
           subHtml = `<div class="weekly-dots">${dots}</div><span style="color:var(--green)">${count >= h.goal ? 'План недели закрыт' : 'Сделано сегодня'}</span>`;
         } else {
           badgeText = count + '/' + h.goal + ' в нед';
-          subHtml = `<div class="weekly-dots">${dots}</div><span>Недельная цель</span>`;
+          subHtml = `<div class="weekly-dots">${dots}</div><span>${h.action}</span>`;
         }
       }
 
@@ -649,14 +701,18 @@
 
     render();
 
-    // Check periodically for 03:00 AM reset
+    // Pull from cloud immediately on load
+    pullFromCloud();
+
+    // Periodic cloud sync and 03:00 AM check every 10 seconds
     setInterval(() => {
       const todayKey = getTodayKey();
       if (appState.lastDay !== todayKey) {
         appState = loadState();
         render();
       }
-    }, 20000);
+      pullFromCloud();
+    }, 10000);
   </script>
 </body>
 </html>
