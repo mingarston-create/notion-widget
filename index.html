@@ -51,8 +51,9 @@
     }
 
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:transparent;color:var(--text-main);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:8px}
-.dashboard{max-width:1600px;margin:auto;padding:12px 20px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px}
+html,body{height:100%}
+body{background:transparent;color:var(--text-main);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:6px;margin:0}
+.dashboard{max-width:1600px;margin:auto;padding:12px 20px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;min-height:calc(100% - 12px);display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box}
 .heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 h1{font-size:14px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-sub);font-weight:700}
 
@@ -67,7 +68,7 @@ h1{font-size:14px;letter-spacing:.09em;text-transform:uppercase;color:var(--text
 .badge{color:var(--accent);background:var(--tint);font-size:13px;padding:4px 8px;border-radius:8px;white-space:nowrap}
 .value-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .number{font-size:clamp(34.2px,3.135vw,41.8px);font-weight:780;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.caption{font-size:13.5px;line-height:1.25;color:var(--text-sub)}
+.caption{font-size:13.5px;line-height:1.25;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card-bottom{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:4px;min-height:22px}
 .card-bottom .caption{flex-shrink:0}
 .done-track{display:block;flex:1;min-width:0;height:6px;background:var(--bar-bg);border-radius:99px;overflow:hidden}.done-fill{height:100%;background:var(--green);width:0}
@@ -78,10 +79,11 @@ h1{font-size:14px;letter-spacing:.09em;text-transform:uppercase;color:var(--text
 .weather-main,.year-pod,.year-top,.year-bar-row{display:flex;align-items:center;gap:12px}
 .weather-temp-wrap{display:flex;align-items:baseline;gap:12px}.weather-icon{font-size:22px}.weather-temp{font-size:20px;font-weight:750}.weather-meta,.year-title,.year-left-chip{font-size:13px;color:var(--text-sub)}
 .year-pct-big{font-size:20px;font-weight:750}.progress-track{height:7px;width:90px;background:var(--bar-bg);border-radius:99px;overflow:hidden}.progress-fill{height:100%;background:var(--bar-fill)}
-@media(max-width:1150px){.cards{gap:10px}.card{padding:10px 12px;min-height:115px}.number{font-size:32px}.badge{font-size:12px}.caption{font-size:12.5px}.context{flex-wrap:wrap}.year-pod{flex-wrap:wrap}}@media(max-width:850px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
-
+@media(max-width:1150px){.cards{gap:10px}.card{padding:10px 12px;min-height:115px}.number{font-size:32px}.badge{font-size:12px}.caption{font-size:12.5px}.context{flex-wrap:wrap}.year-pod{flex-wrap:wrap}}
+@media(max-width:850px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){
-  .dashboard{padding:8px 12px;border-radius:14px}
+  body{padding:4px}
+  .dashboard{padding:8px 12px;border-radius:14px;min-height:calc(100% - 8px)}
   .heading{margin-bottom:6px}
   .cards{
     display:flex;
@@ -120,10 +122,10 @@ h1{font-size:14px;letter-spacing:.09em;text-transform:uppercase;color:var(--text
 <header class="heading"><h1>📊 Метрики задач</h1></header>
 <section class="cards" aria-label="Показатели задач">
 <button type="button" class="card inbox" data-metric="inbox" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">📥</span><span class="badge">Входящие</span></span><span class="number" id="task-inbox">0</span><span class="card-bottom"><span class="caption">На разбор</span></span></button>
-<button type="button" class="card urgent" data-metric="urgent" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">🔥</span><span class="badge">Срочно</span></span><span class="number" id="task-burning">24</span><span class="card-bottom"><span class="caption">Сегодня и просрочено</span></span></button>
+<button type="button" class="card urgent" data-metric="urgent" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">🔥</span><span class="badge">Срочно</span></span><span class="number" id="task-burning">24</span><span class="card-bottom"><span class="caption">Сегодня</span></span></button>
 <button type="button" class="card active" data-metric="active" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">⚡</span><span class="badge">Фокус</span></span><span class="number" id="task-progress">6</span><span class="card-bottom"><span class="caption">В работе</span></span></button>
 <button type="button" class="card pool" data-metric="pool" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">📌</span><span class="badge">Пул</span></span><span class="number" id="task-todo">114</span><span class="card-bottom"><span class="caption">К выполнению</span></span></button>
-<button type="button" class="card done" data-metric="done" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">✅</span><span class="badge" id="task-done-sub">0 из 23</span></span><span class="number" id="task-done">0%</span><span class="card-bottom"><span class="caption">Сегодня</span><span class="done-track" aria-hidden="true"><span class="done-fill" id="done-fill" style="display:block"></span></span></span></button>
+<button type="button" class="card done" data-metric="done" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">✅</span><span class="badge" id="task-done-sub">0 из 23</span></span><span class="number" id="task-done">0%</span><span class="card-bottom"><span class="caption">Закрыто</span><span class="done-track" aria-hidden="true"><span class="done-fill" id="done-fill" style="display:block"></span></span></span></button>
 </section>
 <div class="detail" id="metric-detail" hidden role="status" aria-live="polite" aria-atomic="true"><span class="dot" id="detail-dot" aria-hidden="true"></span><p id="detail-text"></p></div>
 <footer class="context">
@@ -132,7 +134,7 @@ h1{font-size:14px;letter-spacing:.09em;text-transform:uppercase;color:var(--text
 </footer></main>
 <script>
 const params = new URLSearchParams(location.search);
-function metric(key,fallback){const raw=params.get(key);if(raw===null||raw.trim()==='')return fallback;const n=Number(raw);return Number.isFinite(n)&&n>=0?n:fallback}
+function metric(key,fallback){const raw=params.get(key);if(!raw||raw.trim()==='')return fallback;const n=Number(raw);return Number.isFinite(n)&&n>=0?n:fallback}
 const metrics={
   inbox:Math.floor(metric('i',metric('inbox',1))),
   urgent:Math.floor(metric('b',23)),
@@ -154,10 +156,10 @@ document.getElementById('task-done-sub').textContent=metrics.done + (todayTotal 
 document.getElementById('done-fill').style.width=metrics.pct+'%';
 const explanations={
 inbox:()=> 'Входящие на разбор: '+metrics.inbox+'. Новые материалы, задачи и ссылки, ожидающие сортировки.',
-urgent:()=> 'Сегодня и просрочено: '+metrics.urgent+'. Задачи, которым нужно уделить внимание в первую очередь.',
+urgent:()=> 'Сегодня: '+metrics.urgent+'. Срочные задачи и долги, требующие внимания в первую очередь.',
 active:()=> 'В работе: '+metrics.active+'. Задачи, которые уже начаты и сейчас находятся в процессе.',
 pool:()=> 'К выполнению: '+metrics.pool+'. Задачи в очереди — из них можно выбрать следующий шаг.',
-done:()=> 'Прогресс дня: '+metrics.done+' из '+metrics.todayTotal+' задач закрыто ('+metrics.pct+'%).' + (metrics.urgent > 0 ? ' Осталось выполнить сегодня: '+metrics.urgent+'.' : ' Все задачи на сегодня закрыты! 🎉')
+done:()=> 'Закрыто сегодня: '+metrics.done+' из '+metrics.todayTotal+' задач ('+metrics.pct+'%).' + (metrics.urgent > 0 ? ' Осталось на сегодня: '+metrics.urgent+'.' : ' Все задачи на сегодня закрыты! 🎉')
 };
 const colors={inbox:'var(--purple)',urgent:'var(--red)',active:'var(--blue)',pool:'var(--text-sub)',done:'var(--green)'};
 document.querySelectorAll('[data-metric]').forEach(button=>button.addEventListener('click',()=>{
@@ -167,7 +169,29 @@ document.getElementById('metric-detail').hidden=false;
 document.getElementById('detail-text').textContent=explanations[key]();
 document.getElementById('detail-dot').style.background=colors[key];
 }));
-    const WMO = {0:{icon:'☀️',text:'Ясно'},1:{icon:'🌤️',text:'Преим. ясно'},2:{icon:'⛅',text:'Переменная'},3:{icon:'☁️',text:'Пасмурно'},45:{icon:'🌫️',text:'Туман'},48:{icon:'🌫️',text:'Изморозь'},51:{icon:'🌦️',text:'Морось'},53:{icon:'🌦️',text:'Морось'},55:{icon:'🌧️',text:'Морось'},61:{icon:'🌧️',text:'Дождь'},63:{icon:'🌧️',text:'Дождь'},65:{icon:'🌧️',text:'Ливень'},71:{icon:'🌨️',text:'Снег'},73:{icon:'🌨️',text:'Снег'},75:{icon:'❄️',text:'Снегопад'},77:{icon:'🌨️',text:'Крупа'},80:{icon:'🌦️',text:'Ливневый дождь'},81:{icon:'🌧️',text:'Сильный дождь'},85:{icon:'🌨️',text:'Снегопад'},95:{icon:'⛈️',text:'Гроза'}};
+    // 1. WEATHER LOGIC (Open-Meteo API)
+    const WMO = {
+      0: { icon: '☀️', text: 'Ясно' },
+      1: { icon: '🌤️', text: 'Преим. ясно' },
+      2: { icon: '⛅', text: 'Переменная' },
+      3: { icon: '☁️', text: 'Пасмурно' },
+      45: { icon: '🌫️', text: 'Туман' },
+      48: { icon: '🌫️', text: 'Изморозь' },
+      51: { icon: '🌦️', text: 'Морось' },
+      53: { icon: '🌦️', text: 'Морось' },
+      55: { icon: '🌧️', text: 'Морось' },
+      61: { icon: '🌧️', text: 'Дождь' },
+      63: { icon: '🌧️', text: 'Дождь' },
+      65: { icon: '🌧️', text: 'Ливень' },
+      71: { icon: '🌨️', text: 'Снег' },
+      73: { icon: '🌨️', text: 'Снег' },
+      75: { icon: '❄️', text: 'Снегопад' },
+      77: { icon: '🌨️', text: 'Крупа' },
+      80: { icon: '🌦️', text: 'Ливневый дождь' },
+      81: { icon: '🌧️', text: 'Сильный дождь' },
+      85: { icon: '🌨️', text: 'Снегопад' },
+      95: { icon: '⛈️', text: 'Гроза' }
+    };
 
     async function loadWeather() {
       try {
@@ -180,19 +204,23 @@ document.getElementById('detail-dot').style.background=colors[key];
         document.getElementById('w-temp').innerText = (curr.temperature > 0 ? '+' : '') + Math.round(curr.temperature) + '°C';
         document.getElementById('w-icon').innerText = wInfo.icon;
         document.getElementById('w-desc').innerText = 'Москва · ' + wInfo.text;
+
       } catch (e) {
         console.error('Weather error:', e);
       }
     }
 
+    // 2. DYNAMIC YEAR PROGRESS
     function updateYear() {
       const now = new Date();
       const year = now.getFullYear();
       const start = new Date(year, 0, 1);
       const end = new Date(year + 1, 0, 1);
+
       const elapsed = now - start;
       const total = end - start;
       const pct = (elapsed / total * 100).toFixed(1);
+
       const oneDay = 1000 * 60 * 60 * 24;
       const day = Math.floor(elapsed / oneDay) + 1;
       const totalDays = Math.round(total / oneDay);
@@ -206,6 +234,7 @@ document.getElementById('detail-dot').style.background=colors[key];
 
     loadWeather();
     updateYear();
+
     setInterval(() => {
       loadWeather();
       updateYear();
