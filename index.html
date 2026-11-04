@@ -79,8 +79,41 @@ h1{font-size:14px;letter-spacing:.09em;text-transform:uppercase;color:var(--text
 .weather-temp-wrap{display:flex;align-items:baseline;gap:12px}.weather-icon{font-size:22px}.weather-temp{font-size:20px;font-weight:750}.weather-meta,.year-title,.year-left-chip{font-size:13px;color:var(--text-sub)}
 .year-pct-big{font-size:20px;font-weight:750}.progress-track{height:7px;width:90px;background:var(--bar-bg);border-radius:99px;overflow:hidden}.progress-fill{height:100%;background:var(--bar-fill)}
 @media(max-width:1150px){.cards{gap:10px}.card{padding:10px 12px;min-height:115px}.number{font-size:32px}.badge{font-size:12px}.caption{font-size:12.5px}.context{flex-wrap:wrap}.year-pod{flex-wrap:wrap}}@media(max-width:850px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:760px){.dashboard{padding:12px 16px}.heading{align-items:flex-start;flex-direction:column;gap:8px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.number{font-size:38px}.card{min-height:120px}.detail{font-size:15px}.weather-temp-wrap{flex-wrap:wrap;gap:6px}}
-@media(max-width:380px){.dashboard{padding:12px}.cards{gap:12px}.card{padding:10px 14px}.badge{font-size:12px;padding:6px}.icon{font-size:22px}.number{font-size:34.2px}.caption{font-size:12.6px}}
+
+@media(max-width:760px){
+  .dashboard{padding:8px 12px;border-radius:14px}
+  .heading{margin-bottom:6px}
+  .cards{
+    display:flex;
+    overflow-x:auto;
+    gap:8px;
+    padding-bottom:2px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .cards::-webkit-scrollbar{display:none}
+  .card{
+    flex:0 0 132px;
+    min-width:132px;
+    min-height:92px;
+    padding:8px 10px;
+    gap:4px;
+    border-radius:11px;
+  }
+  .card-top{gap:4px}
+  .icon{font-size:18px}
+  .badge{font-size:11px;padding:2px 6px;border-radius:6px}
+  .number{font-size:25px}
+  .caption{font-size:11.5px}
+  .card-bottom{min-height:18px;gap:6px;padding-top:2px}
+  .done-track{height:5px}
+  .detail{font-size:12px;min-height:32px;padding:6px 10px;margin-top:6px}
+  .context{margin-top:6px;padding-top:6px;gap:8px}
+  .weather-icon{font-size:18px}
+  .weather-temp,.year-pct-big{font-size:16px}
+  .weather-meta,.year-title,.year-left-chip{font-size:11px}
+  .progress-track{height:6px;width:70px}
+}
 @media(prefers-reduced-motion:reduce){.card{transition:none}}
 </style></head><body>
 <main class="dashboard">
@@ -134,30 +167,7 @@ document.getElementById('metric-detail').hidden=false;
 document.getElementById('detail-text').textContent=explanations[key]();
 document.getElementById('detail-dot').style.background=colors[key];
 }));
-    // 1. WEATHER LOGIC (Open-Meteo API)
-    const WMO = {
-      0: { icon: '☀️', text: 'Ясно' },
-      1: { icon: '🌤️', text: 'Преим. ясно' },
-      2: { icon: '⛅', text: 'Переменная' },
-      3: { icon: '☁️', text: 'Пасмурно' },
-      45: { icon: '🌫️', text: 'Туман' },
-      48: { icon: '🌫️', text: 'Изморозь' },
-      51: { icon: '🌦️', text: 'Морось' },
-      53: { icon: '🌦️', text: 'Морось' },
-      55: { icon: '🌧️', text: 'Морось' },
-      61: { icon: '🌧️', text: 'Дождь' },
-      63: { icon: '🌧️', text: 'Дождь' },
-      65: { icon: '🌧️', text: 'Ливень' },
-      71: { icon: '🌨️', text: 'Снег' },
-      73: { icon: '🌨️', text: 'Снег' },
-      75: { icon: '❄️', text: 'Снегопад' },
-      77: { icon: '🌨️', text: 'Крупа' },
-      80: { icon: '🌦️', text: 'Ливневый дождь' },
-      81: { icon: '🌧️', text: 'Сильный дождь' },
-      85: { icon: '🌨️', text: 'Снегопад' },
-      95: { icon: '⛈️', text: 'Гроза' }
-    };
-    const DAYS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const WMO = {0:{icon:'☀️',text:'Ясно'},1:{icon:'🌤️',text:'Преим. ясно'},2:{icon:'⛅',text:'Переменная'},3:{icon:'☁️',text:'Пасмурно'},45:{icon:'🌫️',text:'Туман'},48:{icon:'🌫️',text:'Изморозь'},51:{icon:'🌦️',text:'Морось'},53:{icon:'🌦️',text:'Морось'},55:{icon:'🌧️',text:'Морось'},61:{icon:'🌧️',text:'Дождь'},63:{icon:'🌧️',text:'Дождь'},65:{icon:'🌧️',text:'Ливень'},71:{icon:'🌨️',text:'Снег'},73:{icon:'🌨️',text:'Снег'},75:{icon:'❄️',text:'Снегопад'},77:{icon:'🌨️',text:'Крупа'},80:{icon:'🌦️',text:'Ливневый дождь'},81:{icon:'🌧️',text:'Сильный дождь'},85:{icon:'🌨️',text:'Снегопад'},95:{icon:'⛈️',text:'Гроза'}};
 
     async function loadWeather() {
       try {
@@ -170,23 +180,19 @@ document.getElementById('detail-dot').style.background=colors[key];
         document.getElementById('w-temp').innerText = (curr.temperature > 0 ? '+' : '') + Math.round(curr.temperature) + '°C';
         document.getElementById('w-icon').innerText = wInfo.icon;
         document.getElementById('w-desc').innerText = 'Москва · ' + wInfo.text;
-
       } catch (e) {
         console.error('Weather error:', e);
       }
     }
 
-    // 3. DYNAMIC YEAR PROGRESS
     function updateYear() {
       const now = new Date();
       const year = now.getFullYear();
       const start = new Date(year, 0, 1);
       const end = new Date(year + 1, 0, 1);
-
       const elapsed = now - start;
       const total = end - start;
       const pct = (elapsed / total * 100).toFixed(1);
-
       const oneDay = 1000 * 60 * 60 * 24;
       const day = Math.floor(elapsed / oneDay) + 1;
       const totalDays = Math.round(total / oneDay);
