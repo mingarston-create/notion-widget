@@ -569,4 +569,105 @@
         }
 
         if (isCompleted) {
-          badgeText = count + '/' + h.goal +
+          badgeText = count + '/' + h.goal + ' ✅';
+          subHtml = `<div class="weekly-dots">${dots}</div><span style="color:var(--green)">${count >= h.goal ? 'План недели закрыт' : 'Сделано сегодня'}</span>`;
+        } else {
+          badgeText = count + '/' + h.goal + ' в нед';
+          subHtml = `<div class="weekly-dots">${dots}</div><span>Недельная цель</span>`;
+        }
+      }
+
+      card.innerHTML = `
+        <div class="card-top">
+          <span class="habit-icon">${h.icon}</span>
+          <span class="habit-badge">${badgeText}</span>
+        </div>
+        <div class="habit-title">${h.title}</div>
+        <div class="habit-sub">${subHtml}</div>
+      `;
+      return card;
+    }
+
+    function render() {
+      // Check for day/week rollover
+      const todayKey = getTodayKey();
+      const weekKey = getWeekKey();
+      if (appState.lastDay !== todayKey || appState.lastWeek !== weekKey) {
+        appState = loadState();
+      }
+
+      const activeGrid = document.getElementById('active-grid');
+      const completedGrid = document.getElementById('completed-grid');
+      const completedSection = document.getElementById('completed-section');
+      const toggleBtn = document.getElementById('toggle-completed-btn');
+
+      activeGrid.innerHTML = '';
+      completedGrid.innerHTML = '';
+
+      let activeCount = 0;
+      let completedCount = 0;
+
+      HABIT_CONFIG.forEach(h => {
+        const done = isHabitDoneToday(h);
+        if (done) {
+          completedCount++;
+          completedGrid.appendChild(createCard(h, true));
+        } else {
+          activeCount++;
+          activeGrid.appendChild(createCard(h, false));
+        }
+      });
+
+      // All done celebration state
+      if (activeCount === 0) {
+        activeGrid.innerHTML = `
+          <div class="all-done-banner">
+            <span class="all-done-icon">🎉</span>
+            <div>
+              <div class="all-done-title">Все 8 привычек на сегодня закрыты!</div>
+              <div class="all-done-sub">Отличный день! Следующий цикл откроется в 03:00 ночи.</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Update completed tray visibility
+      if (completedCount > 0) {
+        toggleBtn.style.display = 'inline-flex';
+        document.getElementById('toggle-text').innerText = (showCompletedTray ? 'Скрыть готовые (' : 'Скрыто: ') + completedCount + (showCompletedTray ? ')' : '');
+        completedSection.style.display = showCompletedTray ? 'block' : 'none';
+        document.getElementById('completed-count-label').innerText = completedCount + ' из ' + HABIT_CONFIG.length;
+      } else {
+        toggleBtn.style.display = 'none';
+        completedSection.style.display = 'none';
+      }
+
+      // Overall Progress
+      const total = HABIT_CONFIG.length;
+      const pct = Math.round((completedCount / total) * 100);
+
+      document.getElementById('progress-text').innerText = completedCount + ' / ' + total;
+      document.getElementById('pct-label').innerText = pct + '%';
+      document.getElementById('summary-label').innerText = completedCount + ' из ' + total;
+      document.getElementById('total-fill').style.width = pct + '%';
+
+      // Effective Date
+      const nowEff = getEffectiveNow();
+      const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+      const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+      document.getElementById('current-date').innerText = days[nowEff.getDay()] + ', ' + nowEff.getDate() + ' ' + months[nowEff.getMonth()];
+    }
+
+    render();
+
+    // Check periodically for 03:00 AM reset
+    setInterval(() => {
+      const todayKey = getTodayKey();
+      if (appState.lastDay !== todayKey) {
+        appState = loadState();
+        render();
+      }
+    }, 20000);
+  </script>
+</body>
+</html>
