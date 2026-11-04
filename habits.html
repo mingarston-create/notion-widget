@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Трекер привычек</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --card-bg: #ffffff;
+      --card-border: #e9e9e7;
+      --text-main: #37352f;
+      --text-sub: #787774;
+      --divider: #ebebeb;
+      --tile-bg: #fbfbfa;
+      --tile-hover: #f1f1ef;
+      --bar-bg: #e5e5e5;
+      --bar-fill: linear-gradient(90deg, #10b981, #059669);
+      --green: #10b981;
+      --green-bg: #d1fae5;
+      --green-border: #34d399;
+      --blue: #2563eb;
+      --blue-bg: #dbeafe;
+      --purple: #8b5cf6;
+      --purple-bg: #ede9fe;
+      --amber: #d97706;
+      --amber-bg: #fef3c7;
+      --pill-bg: #f7f6f3;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #191919;
+        --card-bg: #202020;
+        --card-border: #2f2f2f;
+        --text-main: #ffffff;
+        --text-sub: #9b9b9b;
+        --divider: #333333;
+        --tile-bg: #272727;
+        --tile-hover: #303030;
+        --bar-bg: #333333;
+        --bar-fill: linear-gradient(90deg, #34d399, #10b981);
+        --green: #34d399;
+        --green-bg: rgba(16, 185, 129, 0.18);
+        --green-border: rgba(52, 211, 153, 0.4);
+        --blue: #60a5fa;
+        --blue-bg: rgba(37, 99, 235, 0.18);
+        --purple: #a78bfa;
+        --purple-bg: rgba(139, 92, 246, 0.18);
+        --amber: #fbbf24;
+        --amber-bg: rgba(217, 119, 6, 0.18);
+        --pill-bg: #2a2a2a;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: transparent;
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 8px;
+      user-select: none;
+    }
+
+    .dashboard {
+      max-width: 1600px;
+      margin: auto;
+      padding: 12px 18px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+    }
+
+    .heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h1 {
+      font-size: 13.5px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      font-weight: 700;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .date-badge {
+      font-size: 12.5px;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    .progress-pill {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      background: var(--green-bg);
+      padding: 3px 8px;
+      border-radius: 99px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .habit-card {
+      appearance: none;
+      text-align: left;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      background: var(--tile-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 13px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .habit-card:hover {
+      background: var(--tile-hover);
+      transform: translateY(-1px);
+    }
+
+    .habit-card:active {
+      transform: scale(0.98);
+    }
+
+    .habit-card.completed {
+      background: var(--green-bg);
+      border-color: var(--green-border);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .habit-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .habit-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 6px;
+      color: var(--text-sub);
+      background: var(--pill-bg);
+      white-space: nowrap;
+      transition: all .15s;
+    }
+
+    .habit-card.completed .habit-badge {
+      background: var(--green);
+      color: #ffffff;
+    }
+
+    .habit-title {
+      font-size: 13.5px;
+      font-weight: 650;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .habit-sub {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: auto;
+    }
+
+    .weekly-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 99px;
+      background: var(--bar-bg);
+      transition: background .15s;
+    }
+
+    .dot.filled {
+      background: var(--green);
+    }
+
+    .footer-bar {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--divider);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .track {
+      flex: 1;
+      height: 6px;
+      background: var(--bar-bg);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      background: var(--bar-fill);
+      width: 0%;
+      transition: width .3s ease;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .dashboard { padding: 8px 12px; border-radius: 14px; }
+      .heading { margin-bottom: 8px; }
+      .grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .grid::-webkit-scrollbar { display: none; }
+      .habit-card {
+        flex: 0 0 135px;
+        min-width: 135px;
+        padding: 8px 10px;
+        gap: 6px;
+      }
+      .habit-icon { font-size: 20px; }
+      .habit-title { font-size: 12.5px; }
+      .habit-badge { font-size: 10px; padding: 2px 5px; }
+      .footer-bar { margin-top: 6px; padding-top: 6px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="dashboard">
+    <header class="heading">
+      <div class="title-wrap">
+        <h1>🌱 Привычки & Ритуалы</h1>
+      </div>
+      <div class="header-right">
+        <span class="date-badge" id="current-date">—</span>
+        <span class="progress-pill" id="progress-text">0 / 8</span>
+      </div>
+    </header>
+
+    <section class="grid" id="habits-grid">
+      <!-- Habits will be rendered by JS -->
+    </section>
+
+    <footer class="footer-bar">
+      <span>Прогресс: <strong id="pct-label" style="color:var(--text-main);">0%</strong></span>
+      <div class="track"><div class="fill" id="total-fill"></div></div>
+      <span id="summary-label">0 из 8 выполнено</span>
+    </footer>
+  </main>
+
+  <script>
+    const HABIT_CONFIG = [
+      { id: 'english', icon: '🇬🇧', title: 'Английский', type: 'daily', goal: 7, label: 'Каждый день' },
+      { id: 'exercise', icon: '🤸', title: 'Зарядка', type: 'daily', goal: 7, label: 'Каждый день' },
+      { id: 'shower', icon: '🚿', title: 'Контрастный душ', type: 'daily', goal: 7, label: 'Каждый день' },
+      { id: 'pushups', icon: '💪', title: 'Отжимания', type: 'daily', goal: 7, label: 'Каждый день' },
+      { id: 'squats', icon: '🦵', title: 'Приседания', type: 'daily', goal: 7, label: 'Каждый день' },
+      { id: 'pool', icon: '🏊‍♂️', title: 'Бассейн', type: 'weekly', goal: 2, label: '2 р/нед' },
+      { id: 'mouthguard', icon: '🦷', title: 'Каппа на ночь', type: 'weekly', goal: 1, label: '1 р/нед' },
+      { id: 'meditation', icon: '🧘', title: 'Медитация', type: 'weekly', goal: 1, label: '1 р/нед' }
+    ];
+
+    const STORAGE_KEY = 'notion_habits_v1';
+
+    function getTodayKey() {
+      const now = new Date();
+      return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    }
+
+    function getWeekKey() {
+      const now = new Date();
+      const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+      return d.getUTCFullYear() + '-W' + String(weekNo).padStart(2, '0');
+    }
+
+    function loadState() {
+      const todayKey = getTodayKey();
+      const weekKey = getWeekKey();
+      let state = {
+        lastDay: todayKey,
+        lastWeek: weekKey,
+        daily: {},
+        weekly: {}
+      };
+
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.lastDay === todayKey) {
+            state.daily = parsed.daily || {};
+          }
+          if (parsed.lastWeek === weekKey) {
+            state.weekly = parsed.weekly || {};
+          }
+        }
+      } catch (e) {
+        console.error('Error loading state:', e);
+      }
+      return state;
+    }
+
+    let appState = loadState();
+
+    function saveState() {
+      appState.lastDay = getTodayKey();
+      appState.lastWeek = getWeekKey();
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error('Save error:', e);
+      }
+    }
+
+    function toggleHabit(id) {
+      const conf = HABIT_CONFIG.find(h => h.id === id);
+      if (!conf) return;
+
+      if (conf.type === 'daily') {
+        appState.daily[id] = !appState.daily[id];
+      } else if (conf.type === 'weekly') {
+        const current = appState.weekly[id] || 0;
+        if (current >= conf.goal) {
+          appState.weekly[id] = 0;
+        } else {
+          appState.weekly[id] = current + 1;
+        }
+      }
+
+      saveState();
+      render();
+    }
+
+    function render() {
+      const grid = document.getElementById('habits-grid');
+      grid.innerHTML = '';
+
+      let completedCount = 0;
+
+      HABIT_CONFIG.forEach(h => {
+        let isDone = false;
+        let badgeText = h.label;
+        let subHtml = '';
+
+        if (h.type === 'daily') {
+          isDone = !!appState.daily[h.id];
+          if (isDone) {
+            completedCount++;
+            badgeText = 'Сделано ✅';
+          }
+          subHtml = `<span style="color:${isDone ? 'var(--green)' : 'var(--text-sub)'}">${isDone ? 'Закрыто сегодня' : 'Надо сделать'}</span>`;
+        } else {
+          const count = appState.weekly[h.id] || 0;
+          isDone = count >= h.goal;
+          if (isDone) {
+            completedCount++;
+            badgeText = count + '/' + h.goal + ' 🎉';
+          } else {
+            badgeText = count + '/' + h.goal;
+          }
+
+          let dots = '';
+          for (let i = 0; i < h.goal; i++) {
+            dots += `<span class="dot ${i < count ? 'filled' : ''}"></span>`;
+          }
+          subHtml = `<div class="weekly-dots">${dots}</div><span>${isDone ? 'План закрыт' : 'Недельная цель'}</span>`;
+        }
+
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'habit-card ' + (isDone ? 'completed' : '');
+        card.setAttribute('aria-label', h.title);
+        card.onclick = () => toggleHabit(h.id);
+
+        card.innerHTML = `
+          <div class="card-top">
+            <span class="habit-icon">${h.icon}</span>
+            <span class="habit-badge">${badgeText}</span>
+          </div>
+          <div class="habit-title">${h.title}</div>
+          <div class="habit-sub">${subHtml}</div>
+        `;
+
+        grid.appendChild(card);
+      });
+
+      const total = HABIT_CONFIG.length;
+      const pct = Math.round((completedCount / total) * 100);
+
+      document.getElementById('progress-text').innerText = completedCount + ' / ' + total;
+      document.getElementById('pct-label').innerText = pct + '%';
+      document.getElementById('summary-label').innerText = completedCount + ' из ' + total + ' выполнено';
+      document.getElementById('total-fill').style.width = pct + '%';
+    }
+
+    const now = new Date();
+    const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+    document.getElementById('current-date').innerText = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
+
+    render();
+  </script>
+</body>
+</html>
