@@ -153,11 +153,15 @@
     .habit-card:hover {
       background: var(--tile-bg);
       border-color: var(--text-sub);
-      transform: translateY(-1px);
     }
 
     .habit-card:active {
       transform: scale(0.97);
+    }
+
+    .habit-card:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: -3px;
     }
 
     .habit-card.completed {
