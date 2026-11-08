@@ -440,7 +440,9 @@
       const list=document.getElementById('habits-list');list.replaceChildren();
       const start=new Date(day+'T00:00:00Z');start.setUTCDate(start.getUTCDate()-29);const from=start.toISOString().slice(0,10);
       for(const h of Object.values(data.habits)){
-        const days=Object.keys(history).filter(d=>d>=from&&d<=day&&(d>=h.created||history[d].includes(h.id)));
+        const firstDone=Object.keys(history).filter(d=>history[d].includes(h.id)).sort()[0] || h.created || day;
+        const since=h.created && h.created<firstDone?h.created:firstDone;
+        const days=Object.keys(history).filter(d=>d>=from&&d<=day&&d>=since);
         const n=days.filter(d=>history[d].includes(h.id)).length;
         const row=document.createElement('div');row.className='habit-stat-row';row.textContent=h.icon+' '+h.title+' · '+n+' выполнений / '+days.length+' дней с данными';list.append(row);
       }

@@ -417,7 +417,7 @@
       const button=document.createElement('button');button.type='button';button.className='habit-card'+(h.done_today?' completed':'');button.disabled=busy.has(h.id)||!current.ready;
       const icon=document.createElement('span');icon.className='habit-icon';icon.textContent=h.icon;
       const title=document.createElement('span');title.className='habit-title';title.textContent=h.title;title.title=h.title;
-      const badge=document.createElement('span');badge.className='habit-badge';badge.textContent=h.done_today?'Сделано сегодня ✅':h.week_done>=h.goal?'План недели выполнен':'Отметить выполнение';
+      const badge=document.createElement('span');badge.className='habit-badge';badge.textContent=h.done_today?'Сегодня ✓':h.week_done>=h.goal?'План недели ✓':'Отметить';
       const sub=document.createElement('span');sub.className='habit-sub';sub.textContent='За неделю: '+h.week_done+' / '+h.goal;
       button.append(icon,title,badge,sub);button.setAttribute('aria-pressed',String(h.done_today));
       button.onclick=async()=>{if(busy.has(h.id))return;busy.add(h.id);button.disabled=true;try{await HabitsSync.setHabit(h.id,!h.done_today);}catch(e){status.textContent='Не удалось сохранить отметку: '+e.message;}finally{busy.delete(h.id);render(current);}};
@@ -442,6 +442,7 @@
       document.getElementById('total-fill').style.width=(total?100*count/total:0)+'%';
       document.getElementById('current-date').textContent=new Date(value.data.today+'T12:00:00Z').toLocaleDateString('ru-RU',{timeZone:'UTC',day:'numeric',month:'short'})+' · день с 03:00 МСК';
     }
+    for(const id of ['active-grid','completed-grid'])document.getElementById(id).addEventListener('wheel',e=>{if(e.deltaY && !e.deltaX)e.currentTarget.scrollLeft+=e.deltaY;},{passive:true});
     HabitsSync.subscribe(render);HabitsSync.start();
   </script>
 </body>
