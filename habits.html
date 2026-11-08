@@ -367,15 +367,15 @@
       .all-done-title { font-size: 13.5px; }
       .all-done-sub { font-size: 11px; }
     }
-  </style>
+  .sync-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-left:8px;vertical-align:middle;flex:none;cursor:help}.sync-dot[data-state="ok"]{background:#22a06b}.sync-dot[data-state="pending"]{background:#e5a000}.sync-dot[data-state="error"]{background:#e5484d}</style>
 </head>
 <body>
   <main class="dashboard">
     <div class="content-wrap">
       <header class="heading">
         <div class="title-wrap">
-          <h1>🌱 Привычки</h1>
-          <span class="date-badge" id="current-date">—</span>
+          <h1>🌱 Привычки<span id="sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span></h1>
+          
         </div>
       </header>
 
@@ -409,11 +409,10 @@
   </main>
 
   <script src="habits-metrics.js?v=monthly-v1"></script>
-  <script src="habits-sync.js?v=phone-clock-v1"></script>
+  <script src="habits-sync.js?v=compact-status-v1"></script>
   <script>
     let showCompletedTray=false, current=null, busy=new Set();
-    const status=document.createElement('div');status.id='sync-status';status.setAttribute('role','status');status.style.cssText='font-size:12px;padding:8px 0;color:var(--text-sub);line-height:1.4';
-    document.querySelector('.heading').after(status);
+    const status=document.getElementById('sync-status');
     function toggleCompletedTray(){showCompletedTray=!showCompletedTray;render(current);}
     function makeCard(h){
       const button=document.createElement('button');button.type='button';button.className='habit-card'+(h.done_today?' completed':'');button.disabled=busy.has(h.id)||!current.ready||(h.type==='weekly'&&h.week_done>=h.goal&&!h.done_today);
@@ -422,13 +421,12 @@
       const badge=document.createElement('span');badge.className='habit-badge';badge.textContent=h.done_today?'Сегодня ✓':h.week_done>=h.goal?'План недели ✓':'Отметить';
       const sub=document.createElement('span');sub.className='habit-sub';sub.textContent=h.type==='daily'?'Каждый день':'За неделю: '+h.week_done+' / '+h.goal;
       button.append(icon,title,badge,sub);button.setAttribute('aria-pressed',String(h.done_today));
-      button.onclick=async()=>{if(busy.has(h.id))return;busy.add(h.id);button.disabled=true;try{await HabitsSync.setHabit(h.id,!h.done_today);}catch(e){status.textContent='Не удалось сохранить отметку: '+e.message;}finally{busy.delete(h.id);render(current);}};
+      button.onclick=async()=>{if(busy.has(h.id))return;busy.add(h.id);button.disabled=true;try{await HabitsSync.setHabit(h.id,!h.done_today);}catch(e){status.dataset.state='error';status.title='Не удалось сохранить отметку: '+e.message;}finally{busy.delete(h.id);render(current);}};
       return button;
     }
     function render(value){
       current=value;if(!value)return;
-      status.textContent=value.error || (value.pending ? 'Сохранено на устройстве · ждут отправки: '+value.pending : value.data?.sync.pending_days ? 'Сохранено на сервере · передаём в Notion' : value.data ? 'Сохранено в Notion' : 'Загружаем привычки…');
-      if(value.data?.sync.error && !value.error && !value.pending) status.textContent='Сохранено на сервере · Notion временно недоступен';
+      HabitsSync.renderStatus(status,value);
       if(!value.data)return;
       const habits=Object.values(value.data.habits).sort((a,b)=>(a.type==='weekly')-(b.type==='weekly')),active=document.getElementById('active-grid'),completed=document.getElementById('completed-grid');active.replaceChildren();completed.replaceChildren();
       const weekly=document.getElementById('weekly-grid');weekly.replaceChildren();
@@ -446,7 +444,6 @@
       document.getElementById('summary-label').textContent=daily.count+' из '+daily.total;
       document.getElementById('pct-label').textContent=(daily.total?Math.round(100*daily.count/daily.total):0)+'%';
       document.getElementById('total-fill').style.width=(daily.total?100*daily.count/daily.total:0)+'%';
-      document.getElementById('current-date').textContent=new Date(value.data.today+'T12:00:00Z').toLocaleDateString('ru-RU',{timeZone:'UTC',day:'numeric',month:'short'})+' · день с 03:00';
     }
     for(const id of ['active-grid','completed-grid'])document.getElementById(id).addEventListener('wheel',e=>{if(e.deltaY && !e.deltaX)e.currentTarget.scrollLeft+=e.deltaY;},{passive:true});
     HabitsSync.subscribe(render);HabitsSync.start();

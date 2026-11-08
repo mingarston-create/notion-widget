@@ -10,11 +10,11 @@
 @media(prefers-color-scheme:dark){.day.partial.high{background:#37482d;color:#c0dba4}}
 @media(max-width:800px){.dashboard{padding:20px}.layout{grid-template-columns:1fr}.details{display:none}.details.open{display:block}.weekly-grid{grid-template-columns:1fr}.kpis{gap:8px}.kpi{padding:12px}.kpi-value{font-size:23px}.header{align-items:start}.sync{max-width:160px}.footer{flex-direction:column;gap:3px}}
 @media(max-width:480px){.dashboard{padding:15px;border-radius:18px}.header{gap:8px}h1{font-size:22px}.sync{font-size:9px;max-width:130px}.kpis{grid-template-columns:repeat(2,1fr);margin:18px 0}.day{min-height:59px;padding:8px 5px;border-radius:9px}.calendar,.weekdays{gap:5px}.day-count{font-size:9px}.day-number{font-size:12px}.month-label{font-size:17px}.legend{gap:9px}.calendar-head{gap:6px}.weekly-head{flex-direction:column;gap:6px}}
-</style>
+.sync-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-left:8px;vertical-align:middle;flex:none;cursor:help}.sync-dot[data-state="ok"]{background:#22a06b}.sync-dot[data-state="pending"]{background:#e5a000}.sync-dot[data-state="error"]{background:#e5484d}</style>
 </head>
 <body>
 <main class="dashboard">
-<header class="header"><div><div class="eyebrow">Маленькие шаги · каждый день</div><h1>Ритм привычек</h1></div><div id="sync-status" class="sync" role="status">Загрузка истории…</div></header>
+<header class="header"><div><div class="eyebrow">Маленькие шаги · каждый день</div><h1>Ритм привычек<span id="sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span></h1></div></header>
 <p class="intro">Ежедневные привычки — в календаре. Недельные цели — отдельно.</p>
 <section class="kpis" aria-label="Показатели">
 <div class="kpi"><div class="kpi-label">Ежедневные · сегодня</div><div class="kpi-value" id="today-value">—</div><div class="kpi-note" id="today-note">Ожидаем данные</div></div>
@@ -31,13 +31,13 @@
 <section class="weekly"><div class="weekly-head"><div><h2>Недельные привычки</h2><p class="sub" id="week-explanation">Цель — на всю неделю, с понедельника по воскресенье. На цвет дней не влияет.</p></div><span class="week-range" id="week-range">—</span></div><div class="weekly-grid" id="weekly-grid"></div></section>
 <footer class="footer"><span>Неделя — с понедельника</span><a href="https://www.notion.so/40e5724abfe381f8a872ee05b265f139" target="_blank" rel="noopener">Управление привычками ↗</a></footer>
 </main>
-<script src="habits-metrics.js?v=monthly-v1"></script><script src="habits-sync.js?v=phone-clock-v1"></script>
+<script src="habits-metrics.js?v=monthly-v1"></script><script src="habits-sync.js?v=compact-status-v1"></script>
 <script>
 let current=null,monthKey=null,selected=null,detailsOpened=false;
 const $=id=>document.getElementById(id),M=HabitMetrics;
 function name(data,id){const h=data.catalog?.[id]||data.habits[id];return h?h.icon+' '+h.title:'Привычка из истории';}
 function format(key,options){return M.date(key).toLocaleDateString('ru-RU',{timeZone:'UTC',...options});}
-function render(value){current=value;const sync=$('sync-status');sync.textContent=value.error||(value.pending?'Сохранено на устройстве · ожидают отправки: '+value.pending:value.data?.sync.error?'Сохранено на сервере · Notion недоступен':value.data?.sync.pending_days?'Сохранено на сервере · передаём в Notion':value.data?'Сохранено в Notion':'Загрузка истории…');sync.classList.toggle('error',!!value.error||!!value.data?.sync.error);if(!value.data)return;
+function render(value){current=value;HabitsSync.renderStatus($('sync-status'),value);if(!value.data)return;
 const data=value.data;if(!monthKey)monthKey=data.today.slice(0,7);if(!selected)selected=data.today;
 const daily=M.day(data,data.today),monthly=M.month(data,monthKey),week=M.week(data,selected);
 $('today-value').textContent=daily.count+' / '+daily.total;$('today-note').textContent=daily.total?(daily.count===daily.total?'Все ежедневные выполнены ✓':'Осталось '+(daily.total-daily.count)):'Нет ежедневных привычек';

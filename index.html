@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Метрики задач</title><style>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Прогресс</title><style>
     :root {
       --bg: #ffffff;
       --card-bg: #ffffff;
@@ -117,14 +117,14 @@ h1{font-size:14px;letter-spacing:.09em;text-transform:uppercase;color:var(--text
   .progress-track{height:6px;width:70px}
 }
 @media(prefers-reduced-motion:reduce){.card{transition:none}}
-</style></head><body>
+.sync-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-left:8px;vertical-align:middle;flex:none;cursor:help}.sync-dot[data-state="ok"]{background:#22a06b}.sync-dot[data-state="pending"]{background:#e5a000}.sync-dot[data-state="error"]{background:#e5484d}</style></head><body>
 <main class="dashboard">
-<header class="heading"><h1>📊 Метрики задач</h1></header>
+<header class="heading"><h1>📊 Прогресс<span id="task-sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span></h1></header>
 <section class="cards" aria-label="Показатели задач">
-<button type="button" class="card inbox" data-metric="inbox" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">📥</span><span class="badge">Входящие</span></span><span class="number" id="task-inbox">0</span><span class="card-bottom"><span class="caption">На разбор</span></span></button>
-<button type="button" class="card urgent" data-metric="urgent" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">🔥</span><span class="badge">Срочно</span></span><span class="number" id="task-burning">24</span><span class="card-bottom"><span class="caption">Сегодня</span></span></button>
-<button type="button" class="card active" data-metric="active" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">⚡</span><span class="badge">Фокус</span></span><span class="number" id="task-progress">6</span><span class="card-bottom"><span class="caption">В работе</span></span></button>
-<button type="button" class="card pool" data-metric="pool" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">📌</span><span class="badge">Пул</span></span><span class="number" id="task-todo">114</span><span class="card-bottom"><span class="caption">К выполнению</span></span></button>
+<button type="button" class="card inbox" data-metric="inbox" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">📥</span><span class="badge">Входящие</span></span><span class="number" id="task-inbox">—</span><span class="card-bottom"><span class="caption">На разбор</span></span></button>
+<button type="button" class="card urgent" data-metric="urgent" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">🔥</span><span class="badge">Срочно</span></span><span class="number" id="task-burning">—</span><span class="card-bottom"><span class="caption">Сегодня</span></span></button>
+<button type="button" class="card active" data-metric="active" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">⚡</span><span class="badge">Фокус</span></span><span class="number" id="task-progress">—</span><span class="card-bottom"><span class="caption">В работе</span></span></button>
+<button type="button" class="card pool" data-metric="pool" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">📌</span><span class="badge">Пул</span></span><span class="number" id="task-todo">—</span><span class="card-bottom"><span class="caption">К выполнению</span></span></button>
 <button type="button" class="card done" data-metric="done" aria-pressed="false" aria-controls="metric-detail"><span class="card-top"><span class="icon" aria-hidden="true">✅</span><span class="badge" id="task-done-sub">0 из 23</span></span><span class="number" id="task-done">0%</span><span class="card-bottom"><span class="caption">Закрыто</span><span class="done-track" aria-hidden="true"><span class="done-fill" id="done-fill" style="display:block"></span></span></span></button>
 </section>
 <div class="detail" id="metric-detail" hidden role="status" aria-live="polite" aria-atomic="true"><span class="dot" id="detail-dot" aria-hidden="true"></span><p id="detail-text"></p></div>
@@ -132,28 +132,18 @@ h1{font-size:14px;letter-spacing:.09em;text-transform:uppercase;color:var(--text
 <div class="weather-main"><span class="weather-icon" id="w-icon">⛅</span><div class="weather-temp-wrap"><span class="weather-temp" id="w-temp">—°C</span><span class="weather-meta" id="w-desc">Москва · загрузка</span></div></div>
 <div class="year-pod"><div class="year-top"><span class="year-title" id="year-title">Год</span><span class="year-left-chip" id="year-left">— дн. ост.</span></div><div class="year-bar-row"><span class="year-pct-big" id="year-pct">—%</span><div class="progress-track"><div class="progress-fill" id="year-fill"></div></div></div></div>
 </footer></main>
+<script src="tasks-sync.js?v=live-v1"></script>
 <script>
-const params = new URLSearchParams(location.search);
-function metric(key,fallback){const raw=params.get(key);if(!raw||raw.trim()==='')return fallback;const n=Number(raw);return Number.isFinite(n)&&n>=0?n:fallback}
-const metrics={
-  inbox:Math.floor(metric('i',metric('inbox',1))),
-  urgent:Math.floor(metric('b',23)),
-  active:Math.floor(metric('p',6)),
-  pool:Math.floor(metric('t',118)),
-  done:Math.floor(metric('d',0))
-};
-const todayTotal = metrics.urgent + metrics.done;
-const calculatedPct = todayTotal > 0 ? Math.round((metrics.done / todayTotal) * 100) : 0;
-metrics.pct = params.has('pct') ? Math.min(100, metric('pct', calculatedPct)) : calculatedPct;
-metrics.todayTotal = todayTotal;
-
-document.getElementById('task-inbox').textContent=metrics.inbox;
-document.getElementById('task-burning').textContent=metrics.urgent;
-document.getElementById('task-progress').textContent=metrics.active;
-document.getElementById('task-todo').textContent=metrics.pool;
-document.getElementById('task-done').textContent=metrics.pct+'%';
-document.getElementById('task-done-sub').textContent=metrics.done + (todayTotal > 0 ? ' из ' + todayTotal : ' закрыто');
-document.getElementById('done-fill').style.width=metrics.pct+'%';
+let metrics={inbox:0,urgent:0,active:0,pool:0,done:0,todayTotal:0,pct:0},hasMetrics=false;
+function renderMetrics(value){
+ const dot=document.getElementById('task-sync-status');dot.dataset.state=value.status;dot.title=value.message;dot.setAttribute('aria-label',value.message);
+ if(value.data){metrics=value.data.metrics;hasMetrics=true;}
+ for(const [id,key] of [['task-inbox','inbox'],['task-burning','urgent'],['task-progress','active'],['task-todo','pool']])document.getElementById(id).textContent=hasMetrics?metrics[key]:'—';
+ document.getElementById('task-done').textContent=hasMetrics?metrics.pct+'%':'—';
+ document.getElementById('task-done-sub').textContent=hasMetrics?metrics.done+' из '+metrics.todayTotal:'Загрузка';
+ document.getElementById('done-fill').style.width=(hasMetrics?metrics.pct:0)+'%';
+ const selected=document.querySelector('[data-metric][aria-pressed="true"]');if(selected)document.getElementById('detail-text').textContent=hasMetrics?explanations[selected.dataset.metric]():'Данные ещё не загружены';
+}
 const explanations={
 inbox:()=> 'Входящие на разбор: '+metrics.inbox+'. Новые материалы, задачи и ссылки, ожидающие сортировки.',
 urgent:()=> 'Сегодня: '+metrics.urgent+'. Срочные задачи и долги, требующие внимания в первую очередь.',
@@ -166,9 +156,10 @@ document.querySelectorAll('[data-metric]').forEach(button=>button.addEventListen
 const key=button.dataset.metric;
 document.querySelectorAll('[data-metric]').forEach(card=>card.setAttribute('aria-pressed',String(card===button)));
 document.getElementById('metric-detail').hidden=false;
-document.getElementById('detail-text').textContent=explanations[key]();
+document.getElementById('detail-text').textContent=hasMetrics?explanations[key]():'Данные ещё не загружены';
 document.getElementById('detail-dot').style.background=colors[key];
 }));
+TaskSync.subscribe(renderMetrics);TaskSync.start();
     // 1. WEATHER LOGIC (Open-Meteo API)
     const WMO = {
       0: { icon: '☀️', text: 'Ясно' },

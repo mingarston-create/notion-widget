@@ -99,6 +99,13 @@
     }
     return {data:result,pending:outbox.length,error:storageError || error || (outbox.find(o=>o.blocked)?'Запись сохранена и требует проверки: '+outbox.find(o=>o.blocked).blocked:'') || remoteError,hasKey:!!key,ready:!!result && !storageError,blocked:outbox.some(o=>o.blocked)};
   }
+  function renderStatus(element,value){
+    const failure=value.error || value.data?.sync.error;
+    const pending=value.pending || value.data?.sync.pending_days;
+    const status=failure?'error':pending?'pending':value.data?'ok':'loading';
+    const label=failure || (value.pending?'Сохранено на устройстве. Ожидает отправки: '+value.pending:value.data?.sync.pending_days?'Сохранено на сервере. Передаём в Notion':value.data?'Синхронизировано с Notion':'Загрузка');
+    element.textContent='';element.dataset.state=status;element.title=label;element.setAttribute('aria-label',label);
+  }
   async function request(path, options = {}) {
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 12000);
     try {
@@ -188,5 +195,5 @@
   root.addEventListener('online',tick);
   root.addEventListener('focus',tick);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick();});
-  root.HabitsSync={start,subscribe(fn){subscribers.add(fn);fn(state());return ()=>subscribers.delete(fn);},setHabit,refresh:tick,state,day,effectiveDate};
+  root.HabitsSync={start,subscribe(fn){subscribers.add(fn);fn(state());return ()=>subscribers.delete(fn);},setHabit,refresh:tick,state,day,effectiveDate,renderStatus};
 })(window);
