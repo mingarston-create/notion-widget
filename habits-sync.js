@@ -31,6 +31,20 @@
     finally{settingClock=false;notify();}
   }
   function renderClock() {
+    const gear=document.getElementById('clock-settings');
+    if(gear){
+      const c=clock();
+      gear.disabled=!snapshot||settingClock;
+      const needsChoice=isPhone&&deviceId&&(c.primary_device!==deviceId||c.timezone!==detectedZone());
+      gear.title=needsChoice?'Сделать этот телефон основным':'Часовой пояс: '+c.timezone;
+      gear.setAttribute('aria-label',gear.title);
+      gear.onclick=()=>{
+        if(needsChoice){if(confirm('Сделать этот телефон основным и установить для всех устройств '+detectedZone()+'? История и сохранённые нажатия останутся на прежних датах.'))updateClock(true);}
+        else alert((isPhone?'Этот телефон уже основной.':'Основной телефон задаёт часовой пояс для всех устройств.')+' Часовой пояс: '+c.timezone+'. Начало дня — 03:00.');
+      };
+      document.getElementById('tracker-clock')?.remove();
+      return;
+    }
     let box=document.getElementById('tracker-clock');
     if(!box){box=document.createElement('div');box.id='tracker-clock';box.style.cssText='font:12px system-ui;padding:8px 0;line-height:1.5;color:inherit';(document.querySelector('footer')||document.body).before(box);}
     box.replaceChildren();
