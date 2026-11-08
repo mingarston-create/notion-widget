@@ -415,7 +415,7 @@
     ];
 
     const STORAGE_KEY = 'notion_habits_v2';
-    const CLOUD_SYNC_URL = 'https://kvdb.io/2bUaDrs1g6gpQAfdfCEZrD/notion_habits_v2';
+    const SERVER_API = 'https://153.76.192.118:8443/api/habits';
 
     // Baseline historical records
     const BASELINE_HISTORY = {
@@ -444,49 +444,36 @@
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
-    function getMergedHistory() {
+    function getMergedHistory(remoteData) {
       let hist = { ...BASELINE_HISTORY };
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.history && typeof parsed.history === 'object') {
-            hist = { ...hist, ...parsed.history };
-          }
-          // Also include today's live state if available
-          const today = getTodayKey();
-          if (parsed.daily && Object.keys(parsed.daily).length > 0) {
-            const activeDone = Object.keys(parsed.daily).filter(k => parsed.daily[k]);
-            if (activeDone.length > 0) {
-              hist[today] = Array.from(new Set([...(hist[today] || []), ...activeDone]));
+      if (remoteData && remoteData.stats && remoteData.stats.history) {
+        hist = { ...hist, ...remoteData.stats.history };
+      } else {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.stats && parsed.stats.history) {
+              hist = { ...hist, ...parsed.stats.history };
             }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
       return hist;
     }
 
-    function renderStats() {
-      const history = getMergedHistory();
+    function renderStats(remoteData) {
+      const history = getMergedHistory(remoteData);
       const todayKey = getTodayKey();
 
       // Calculate Streaks
-      let curStreak = 0;
-      let maxStreak = 14;
-      let d = new Date(getEffectiveNow());
+      let curStreak = remoteData?.stats?.current_streak;
+      let maxStreak = remoteData?.stats?.best_streak;
       
-      while (true) {
-        const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        const done = history[k] || [];
-        if (done.length >= 4) { // Active day threshold
-          curStreak++;
-          d.setDate(d.getDate() - 1);
-        } else {
-          break;
-        }
+      if (!curStreak) {
+        curStreak = 14;
+        maxStreak = 14;
       }
-      curStreak = Math.max(curStreak, 14);
-      maxStreak = Math.max(maxStreak, curStreak);
 
       document.getElementById('kpi-current-streak').innerHTML = `${curStreak} <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span>`;
       document.getElementById('kpi-max-streak').innerHTML = `${maxStreak} <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span>`;
@@ -607,15 +594,17 @@
 
     async function pullCloud() {
       try {
-        const res = await fetch(CLOUD_SYNC_URL + '?_=' + Date.now());
+        const res = await fetch(SERVER_API + '/status?_=' + Date.now());
         if (res.ok) {
-          const remote = await res.json();
-          if (remote) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(remote));
-            renderStats();
+          const data = await res.json();
+          if (data && data.stats) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            renderStats(data);
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Server sync error:', e);
+      }
     }
 
     renderStats();

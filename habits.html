@@ -419,7 +419,7 @@
     ];
 
     const STORAGE_KEY = 'notion_habits_v2';
-    const CLOUD_SYNC_URL = 'https://kvdb.io/2bUaDrs1g6gpQAfdfCEZrD/notion_habits_v2';
+    const SERVER_API = 'https://153.76.192.118:8443/api/habits';
     let showCompletedTray = false;
 
     // Shift time by -3 hours so new day begins at 03:00 AM sharp
@@ -491,57 +491,33 @@
       } catch (e) {
         console.error('Save error:', e);
       }
-      // Instant cloud sync
-      pushToCloud();
-    }
-
-    async function pushToCloud() {
-      try {
-        await fetch(CLOUD_SYNC_URL, {
-          method: 'POST',
-          body: JSON.stringify(appState)
-        });
-      } catch (e) {
-        // Silent fallback
-      }
     }
 
     async function pullFromCloud() {
       try {
-        const res = await fetch(CLOUD_SYNC_URL + '?_=' + Date.now());
+        const res = await fetch(SERVER_API + '/status?_=' + Date.now());
         if (!res.ok) return;
         const remote = await res.json();
         const todayKey = getTodayKey();
-        const weekKey = getWeekKey();
 
         let changed = false;
 
-        // Merge history
-        if (remote && remote.history && typeof remote.history === 'object') {
-          if (!appState.history) appState.history = {};
-          for (const [d, arr] of Object.entries(remote.history)) {
-            if (Array.isArray(arr) && (!appState.history[d] || JSON.stringify(appState.history[d]) !== JSON.stringify(arr))) {
-              appState.history[d] = arr;
-              changed = true;
-            }
-          }
-        }
-
-        if (remote && remote.lastDay === todayKey) {
-          // Merge daily
-          if (remote.daily) {
-            for (const [k, v] of Object.entries(remote.daily)) {
-              if (appState.daily[k] !== v) {
-                appState.daily[k] = v;
+        if (remote.habits) {
+          for (const [id, info] of Object.entries(remote.habits)) {
+            const conf = HABIT_CONFIG.find(h => h.id === id);
+            if (!conf) continue;
+            if (conf.type === 'daily') {
+              if (appState.daily[id] !== info.done_today) {
+                appState.daily[id] = info.done_today;
                 changed = true;
               }
-            }
-          }
-          // Merge weekly
-          if (remote.lastWeek === weekKey && remote.weekly) {
-            for (const [k, v] of Object.entries(remote.weekly)) {
-              if (JSON.stringify(appState.weekly[k]) !== JSON.stringify(v)) {
-                appState.weekly[k] = v;
+            } else {
+              const cur = appState.weekly[id] || { count: 0, lastDoneDay: null };
+              if (cur.count !== info.week_done || (info.done_today && cur.lastDoneDay !== todayKey)) {
+                appState.weekly[id] = {
+                  count: info.week_done,
+                  lastDoneDay: info.done_today ? todayKey : cur.lastDoneDay
+                };
                 changed = true;
               }
             }
@@ -566,7 +542,7 @@
       return w.lastDoneDay === todayKey || w.count >= h.goal;
     }
 
-    function completeHabit(id) {
+    async function completeHabit(id) {
       const conf = HABIT_CONFIG.find(h => h.id === id);
       if (!conf) return;
 
@@ -581,18 +557,22 @@
         };
       }
 
-      // Record in permanent history
-      if (!appState.history) appState.history = {};
-      if (!Array.isArray(appState.history[todayKey])) appState.history[todayKey] = [];
-      if (!appState.history[todayKey].includes(id)) {
-        appState.history[todayKey].push(id);
-      }
-
       saveState();
       render();
+
+      // Send to server -> updates Notion database
+      try {
+        await fetch(SERVER_API + '/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id, done: true })
+        });
+      } catch (e) {
+        console.error('Notion server sync error:', e);
+      }
     }
 
-    function uncompleteHabit(id) {
+    async function uncompleteHabit(id) {
       const conf = HABIT_CONFIG.find(h => h.id === id);
       if (!conf) return;
 
@@ -607,13 +587,19 @@
         };
       }
 
-      // Remove from permanent history
-      if (appState.history && Array.isArray(appState.history[todayKey])) {
-        appState.history[todayKey] = appState.history[todayKey].filter(x => x !== id);
-      }
-
       saveState();
       render();
+
+      // Send to server -> updates Notion database
+      try {
+        await fetch(SERVER_API + '/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id, done: false })
+        });
+      } catch (e) {
+        console.error('Notion server sync error:', e);
+      }
     }
 
     function toggleCompletedTray() {
