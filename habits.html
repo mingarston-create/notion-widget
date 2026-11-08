@@ -372,6 +372,13 @@
       .all-done-title { font-size: 13.5px; }
       .all-done-sub { font-size: 11px; }
     }
+    .settings-btn { appearance:none; border:0; background:transparent; color:var(--text-sub); font:20px/1 system-ui; width:28px; height:24px; padding:0; cursor:pointer; border-radius:6px; }
+    .settings-btn:hover { background:var(--pill-bg); }
+    .settings-btn:focus-visible { outline:2px solid var(--blue); }
+    .settings-btn:disabled { opacity:.45; cursor:default; }
+    .title-wrap { gap:6px; }
+    .title-wrap .sync-dot { margin-left:2px; }
+    .done-check { position:absolute; right:12px; top:10px; color:var(--green); font-weight:700; }
   .sync-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-left:8px;vertical-align:middle;flex:none;cursor:help}.sync-dot[data-state="ok"]{background:#22a06b}.sync-dot[data-state="pending"]{background:#e5a000}.sync-dot[data-state="error"]{background:#e5484d}</style>
 </head>
 <body>
@@ -379,7 +386,7 @@
     <div class="content-wrap">
       <header class="heading">
         <div class="title-wrap">
-          <h1>🌱 Привычки<span id="sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span></h1>
+          <h1>🌱 Привычки</h1><button id="clock-settings" type="button" class="settings-btn" aria-label="Настройки основного телефона" title="Настройки основного телефона">⚙</button><span id="sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span>
           
         </div>
       </header>
@@ -399,17 +406,24 @@
   </main>
 
   <script src="habits-metrics.js?v=monthly-v1"></script>
-  <script src="habits-sync.js?v=single-row-v1"></script>
+  <script src="habits-sync.js?v=sorted-settings-v2"></script>
   <script>
     let current=null, busy=new Set();
     const status=document.getElementById('sync-status');
+    function completed(h){return h.done_today||(h.type==='weekly'&&h.week_done>=h.goal);}
+    function dailyCaption(h){
+      const title=h.title.toLowerCase();
+      for(const [pattern,text] of [[/контраст|душ/,'Пора взбодриться'],[/английск/,'Короткий урок'],[/отжим/,'Становимся сильнее'],[/присед/,'Добавим движения'],[/медита/,'Время выдохнуть'],[/заряд/,'Заряд на весь день'],[/кап[ауы]/,'Забота об улыбке'],[/бассейн|плаван/,'Время поплавать']])if(pattern.test(title))return text;
+      return 'Время для себя';
+    }
     function makeCard(h){
-      const button=document.createElement('button');button.type='button';button.className='habit-card'+(h.done_today||(h.type==='weekly'&&h.week_done>=h.goal)?' completed':'');button.disabled=busy.has(h.id)||!current.ready||(h.type==='weekly'&&h.week_done>=h.goal&&!h.done_today);
+      const button=document.createElement('button');button.type='button';button.className='habit-card'+(completed(h)?' completed':'');button.dataset.habitId=h.id;button.disabled=busy.has(h.id)||!current.ready||(h.type==='weekly'&&h.week_done>=h.goal&&!h.done_today);
       const icon=document.createElement('span');icon.className='habit-icon';icon.textContent=h.icon;
       const title=document.createElement('span');title.className='habit-title';title.textContent=h.title;title.title=h.title;
-      const badge=document.createElement('span');badge.className='habit-badge';badge.textContent=h.done_today?'Сегодня ✓':h.week_done>=h.goal?'План недели ✓':'Отметить';
-      const sub=document.createElement('span');sub.className='habit-sub';sub.textContent=h.type==='daily'?'Каждый день':'За неделю: '+h.week_done+' / '+h.goal;
-      button.append(icon,title,badge,sub);button.setAttribute('aria-pressed',String(h.done_today));
+      const sub=document.createElement('span');sub.className='habit-sub';sub.textContent=h.type==='daily'?dailyCaption(h):'За неделю: '+h.week_done+' / '+h.goal;
+      button.append(icon,title,sub);
+      if(completed(h)){const check=document.createElement('span');check.className='done-check';check.textContent='✓';check.setAttribute('aria-hidden','true');button.append(check);}
+      button.setAttribute('aria-pressed',String(h.done_today));
       button.onclick=async()=>{if(busy.has(h.id))return;busy.add(h.id);button.disabled=true;try{await HabitsSync.setHabit(h.id,!h.done_today);}catch(e){status.dataset.state='error';status.title='Не удалось сохранить отметку: '+e.message;}finally{busy.delete(h.id);render(current);}};
       return button;
     }
@@ -417,10 +431,21 @@
       current=value;if(!value)return;
       HabitsSync.renderStatus(status,value);
       if(!value.data)return;
-      const habits=Object.values(value.data.habits).sort((a,b)=>(a.type==='weekly')-(b.type==='weekly')),active=document.getElementById('active-grid');
-      const scroll=active.scrollLeft;active.replaceChildren();
+      const habits=Object.values(value.data.habits).sort((a,b)=>Number(completed(a))-Number(completed(b))||(a.type==='weekly')-(b.type==='weekly')),active=document.getElementById('active-grid');
+      const scroll=active.scrollLeft;
+      const oldPositions=new Map([...active.children].map(el=>[el.dataset.habitId,el.getBoundingClientRect().left]));
+      const focusedId=document.activeElement?.dataset.habitId;
+      active.replaceChildren();
       for(const h of habits)active.append(makeCard(h));
       active.scrollLeft=scroll;
+      for(const card of active.children){
+        if(card.dataset.habitId===focusedId)card.focus({preventScroll:true});
+        const oldLeft=oldPositions.get(card.dataset.habitId);
+        if(oldLeft!==undefined&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+          const delta=oldLeft-card.getBoundingClientRect().left;
+          if(delta)card.animate([{transform:`translateX(${delta}px)`},{transform:'translateX(0)'}],{duration:280,easing:'ease-out'});
+        }
+      }
       if(!habits.length){const text=document.createElement('p');text.textContent='Добавь привычку в базу Notion — кнопка появится автоматически.';active.append(text);}
       const daily=HabitMetrics.day(value.data,value.data.today);
       document.getElementById('summary-label').textContent=daily.count+' из '+daily.total;
