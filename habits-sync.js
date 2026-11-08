@@ -21,18 +21,34 @@
   let deviceId='',settingClock=false;
   const isPhone=/iPhone|Android.*Mobile/i.test(navigator.userAgent);
   function detectedZone(){return Intl.DateTimeFormat().resolvedOptions().timeZone;}
+  let clockNoticeTimer;
+  function showClockNotice(message) {
+    let notice=document.getElementById('clock-notice');
+    if(!notice){
+      notice=document.createElement('div');notice.id='clock-notice';
+      notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');
+      notice.style.cssText='position:fixed;top:8px;left:12px;right:12px;z-index:1000;padding:10px 14px;border-radius:12px;background:var(--card-bg,#fff);color:var(--text-main,#37352f);border:1px solid var(--card-border,#e9e9e7);box-shadow:0 4px 18px #0002;font:12px/1.4 system-ui;pointer-events:none';
+      document.body.append(notice);
+    }
+    clearTimeout(clockNoticeTimer);notice.textContent=message;notice.hidden=false;
+    clockNoticeTimer=setTimeout(()=>{notice.hidden=true;},3500);
+  }
   async function updateClock(replace=false) {
     if(settingClock)return;
     settingClock=true;
     try {
       await request('/settings/timezone',{method:'POST',body:JSON.stringify({device_id:deviceId,device_kind:'phone',timezone:detectedZone(),expected_revision:clock().revision,replace_phone:replace})});
       await saveSnapshot(await request('/status'));error='';broadcast();
-    } catch(e){error='Не удалось обновить часовой пояс. Пока действует '+clock().timezone;}
+      if(replace)showClockNotice('Часовой пояс установлен: '+clock().timezone+'. Этот телефон — основной.');
+    } catch(e){error='Не удалось обновить часовой пояс. Пока действует '+clock().timezone;if(replace)showClockNotice(error);}
     finally{settingClock=false;notify();}
   }
   function renderClock() {
     const gear=document.getElementById('clock-settings');
     if(gear){
+      gear.hidden=!isPhone;
+      document.getElementById('tracker-clock')?.remove();
+      if(!isPhone)return;
       const c=clock();
       gear.disabled=!snapshot||settingClock;
       const needsChoice=isPhone&&deviceId&&(c.primary_device!==deviceId||c.timezone!==detectedZone());
@@ -40,7 +56,7 @@
       gear.setAttribute('aria-label',gear.title);
       gear.onclick=()=>{
         if(needsChoice){if(confirm('Сделать этот телефон основным и установить для всех устройств '+detectedZone()+'? История и сохранённые нажатия останутся на прежних датах.'))updateClock(true);}
-        else alert((isPhone?'Этот телефон уже основной.':'Основной телефон задаёт часовой пояс для всех устройств.')+' Часовой пояс: '+c.timezone+'. Начало дня — 03:00.');
+        else showClockNotice('Часовой пояс установлен: '+c.timezone+'. Этот телефон — основной.');
       };
       document.getElementById('tracker-clock')?.remove();
       return;
