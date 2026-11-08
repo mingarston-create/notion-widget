@@ -386,7 +386,7 @@
     <div class="content-wrap">
       <header class="heading">
         <div class="title-wrap">
-          <h1>🌱 Привычки</h1><button id="clock-settings" type="button" class="settings-btn" aria-label="Настройки основного телефона" title="Настройки основного телефона">⚙</button><span id="sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span>
+          <h1>🌱 Привычки</h1><button id="clock-settings" hidden type="button" class="settings-btn" aria-label="Настройки основного телефона" title="Настройки основного телефона">⚙</button><span id="sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span>
           
         </div>
       </header>
@@ -406,7 +406,7 @@
   </main>
 
   <script src="habits-metrics.js?v=monthly-v1"></script>
-  <script src="habits-sync.js?v=sorted-settings-v2"></script>
+  <script src="habits-sync.js?v=phone-settings-v3"></script>
   <script>
     let current=null, busy=new Set();
     const status=document.getElementById('sync-status');
