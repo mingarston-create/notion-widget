@@ -10,25 +10,41 @@
 @media(prefers-color-scheme:dark){.day.partial.high{background:#37482d;color:#c0dba4}}
 @media(max-width:800px){.dashboard{padding:20px}.layout{grid-template-columns:1fr}.details{display:none}.details.open{display:block}.weekly-grid{grid-template-columns:1fr}.kpis{gap:8px}.kpi{padding:12px}.kpi-value{font-size:23px}.header{align-items:start}.sync{max-width:160px}.footer{flex-direction:column;gap:3px}}
 @media(max-width:480px){.dashboard{padding:15px;border-radius:18px}.header{gap:8px}h1{font-size:22px}.sync{font-size:9px;max-width:130px}.kpis{grid-template-columns:repeat(2,1fr);margin:18px 0}.day{min-height:59px;padding:8px 5px;border-radius:9px}.calendar,.weekdays{gap:5px}.day-count{font-size:9px}.day-number{font-size:12px}.month-label{font-size:17px}.legend{gap:9px}.calendar-head{gap:6px}.weekly-head{flex-direction:column;gap:6px}}
-.sync-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-left:8px;vertical-align:middle;flex:none;cursor:help}.sync-dot[data-state="ok"]{background:#22a06b}.sync-dot[data-state="pending"]{background:#e5a000}.sync-dot[data-state="error"]{background:#e5484d}</style>
+.sync-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-left:8px;vertical-align:middle;flex:none;cursor:help}.sync-dot[data-state="ok"]{background:#22a06b}.sync-dot[data-state="pending"]{background:#e5a000}.sync-dot[data-state="error"]{background:#e5484d}
+/* Compact calendar: use width before adding height. */
+.dashboard{max-width:1600px;padding:18px;border-radius:20px}
+h1{font-size:23px;margin:0}.intro{margin-top:5px;font-size:11px}
+.layout{grid-template-columns:minmax(0,1.2fr) minmax(280px,1fr);gap:16px;margin-top:16px;align-items:start}
+.calendar-head{margin-bottom:12px}.day{min-height:54px;padding:7px;gap:5px;border-radius:9px}
+.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+.kpi{padding:10px 12px;border-radius:12px}.kpi-value{font-size:23px;margin:4px 0 2px}.kpi-note{line-height:1.35}
+.weekly{margin-top:12px;padding-top:12px}.weekly-head{margin-bottom:8px;flex-wrap:wrap;gap:5px}
+.sub{margin-top:3px;font-size:10px;line-height:1.4}.weekly-grid{grid-template-columns:1fr;gap:6px}
+.weekly-card{padding:8px 10px;border-radius:10px}.bar{margin:6px 0 4px}.weekly-note{line-height:1.3}
+.details{grid-column:1/-1;padding:12px;display:none}.details.open{display:block}
+.detail-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px;gap:8px}
+.detail-weekly{margin-top:10px;padding-top:8px}.footer{margin-top:12px}
+@media(max-width:800px){.layout{grid-template-columns:1fr;gap:12px;margin-top:12px}.dashboard{padding:14px}.day{min-height:48px}.summary{min-width:0}.weekly-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.detail-list{grid-template-columns:repeat(2,minmax(0,1fr))}.footer{flex-direction:row}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.dashboard{padding:12px}.intro{font-size:10px}h1{font-size:21px}.calendar-head{margin-bottom:10px}.calendar,.weekdays{gap:5px}.day{padding:6px 4px;min-height:46px}.day-count{font-size:8px;letter-spacing:-.2px}.day-number{font-size:12px}.kpis{margin:0;gap:6px}.kpi{padding:8px 10px}.kpi-value{font-size:21px}.kpi-label{font-size:10px}.kpi-note{font-size:9px}.weekly-grid{grid-template-columns:1fr}.weekly-head{flex-direction:row}.detail-list{grid-template-columns:1fr}.footer{font-size:9px;gap:6px}.month-label{font-size:16px}.nav.today-button{padding:0 7px}}
+</style>
 </head>
 <body>
 <main class="dashboard">
-<header class="header"><div><div class="eyebrow">Маленькие шаги · каждый день</div><h1>Ритм привычек<span id="sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span></h1></div></header>
+<header class="header"><div><h1>Ритм привычек<span id="sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span></h1></div></header>
 <p class="intro">Ежедневные привычки — в календаре. Недельные цели — отдельно.</p>
-<section class="kpis" aria-label="Показатели">
+<div class="layout"><section aria-label="Месячный календарь"><div class="calendar-head"><h2 class="month-label" id="month-label">Календарь</h2><div class="navigation"><button class="nav" id="previous" aria-label="Предыдущий месяц">‹</button><button class="nav today-button" id="this-month">Сегодня</button><button class="nav" id="next" aria-label="Следующий месяц">›</button></div></div>
+<div class="weekdays" aria-hidden="true"><span class="weekday">ПН</span><span class="weekday">ВТ</span><span class="weekday">СР</span><span class="weekday">ЧТ</span><span class="weekday">ПТ</span><span class="weekday">СБ</span><span class="weekday">ВС</span></div>
+<div class="calendar" id="calendar"></div>
+</section>
+<div class="summary"><section class="kpis" aria-label="Показатели">
 <div class="kpi"><div class="kpi-label">Ежедневные · сегодня</div><div class="kpi-value" id="today-value">—</div><div class="kpi-note" id="today-note">Ожидаем данные</div></div>
 <div class="kpi"><div class="kpi-label">Выполнение за месяц</div><div class="kpi-value" id="month-value">—</div><div class="kpi-note" id="month-note">По завершённым дням</div></div>
 <div class="kpi"><div class="kpi-label">Идеальные дни месяца</div><div class="kpi-value" id="perfect-value">—</div><div class="kpi-note">Все ежедневные выполнены</div></div>
 <div class="kpi"><div class="kpi-label">Недельный план</div><div class="kpi-value" id="weekly-value">—</div><div class="kpi-note">Не влияет на цвет дней</div></div>
 </section>
-<div class="layout"><section aria-label="Месячный календарь"><div class="calendar-head"><h2 class="month-label" id="month-label">Календарь</h2><div class="navigation"><button class="nav" id="previous" aria-label="Предыдущий месяц">‹</button><button class="nav today-button" id="this-month">Сегодня</button><button class="nav" id="next" aria-label="Следующий месяц">›</button></div></div>
-<div class="weekdays" aria-hidden="true"><span class="weekday">ПН</span><span class="weekday">ВТ</span><span class="weekday">СР</span><span class="weekday">ЧТ</span><span class="weekday">ПТ</span><span class="weekday">СБ</span><span class="weekday">ВС</span></div>
-<div class="calendar" id="calendar"></div>
-<div class="legend"><span><i class="swatch" style="background:var(--red)"></i>0 выполнений</span><span><i class="swatch" style="background:#e4bc55"></i>Часть</span><span><i class="swatch" style="background:var(--green)"></i>Все выполнены</span><span><i class="swatch" style="background:var(--blue)"></i>Сегодня · в процессе</span></div>
-<p class="legend-note">Нажми на день, чтобы увидеть детали. Будущие дни и дни без данных не считаются пропусками.</p></section>
-<aside class="details" id="details" aria-live="polite"><div class="eyebrow">Детали дня</div><h2 class="detail-date" id="detail-date">—</h2><p class="detail-state" id="detail-state">Загружаем историю</p><ul class="detail-list" id="detail-list"></ul><p class="detail-weekly" id="detail-weekly"></p></aside></div>
+
 <section class="weekly"><div class="weekly-head"><div><h2>Недельные привычки</h2><p class="sub" id="week-explanation">Цель — на всю неделю, с понедельника по воскресенье. На цвет дней не влияет.</p></div><span class="week-range" id="week-range">—</span></div><div class="weekly-grid" id="weekly-grid"></div></section>
+</div><aside class="details" id="details" aria-live="polite"><div class="eyebrow">Детали дня</div><h2 class="detail-date" id="detail-date">—</h2><p class="detail-state" id="detail-state">Загружаем историю</p><ul class="detail-list" id="detail-list"></ul><p class="detail-weekly" id="detail-weekly"></p></aside></div>
 <footer class="footer"><span>Неделя — с понедельника</span><a href="https://www.notion.so/40e5724abfe381f8a872ee05b265f139" target="_blank" rel="noopener">Управление привычками ↗</a></footer>
 </main>
 <script src="habits-metrics.js?v=monthly-v1"></script><script src="habits-sync.js?v=single-row-v1"></script>
