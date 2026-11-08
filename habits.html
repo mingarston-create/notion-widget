@@ -451,7 +451,8 @@
         lastDay: todayKey,
         lastWeek: weekKey,
         daily: {},
-        weekly: {}
+        weekly: {},
+        history: {}
       };
 
       try {
@@ -469,6 +470,9 @@
                 state.weekly[k] = v;
               }
             }
+          }
+          if (parsed.history && typeof parsed.history === 'object') {
+            state.history = parsed.history;
           }
         }
       } catch (e) {
@@ -510,8 +514,20 @@
         const todayKey = getTodayKey();
         const weekKey = getWeekKey();
 
+        let changed = false;
+
+        // Merge history
+        if (remote && remote.history && typeof remote.history === 'object') {
+          if (!appState.history) appState.history = {};
+          for (const [d, arr] of Object.entries(remote.history)) {
+            if (Array.isArray(arr) && (!appState.history[d] || JSON.stringify(appState.history[d]) !== JSON.stringify(arr))) {
+              appState.history[d] = arr;
+              changed = true;
+            }
+          }
+        }
+
         if (remote && remote.lastDay === todayKey) {
-          let changed = false;
           // Merge daily
           if (remote.daily) {
             for (const [k, v] of Object.entries(remote.daily)) {
@@ -530,10 +546,11 @@
               }
             }
           }
-          if (changed) {
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch(e){}
-            render();
-          }
+        }
+
+        if (changed) {
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch(e){}
+          render();
         }
       } catch (e) {
         // Silent fallback
@@ -563,6 +580,14 @@
           lastDoneDay: todayKey
         };
       }
+
+      // Record in permanent history
+      if (!appState.history) appState.history = {};
+      if (!Array.isArray(appState.history[todayKey])) appState.history[todayKey] = [];
+      if (!appState.history[todayKey].includes(id)) {
+        appState.history[todayKey].push(id);
+      }
+
       saveState();
       render();
     }
@@ -571,6 +596,7 @@
       const conf = HABIT_CONFIG.find(h => h.id === id);
       if (!conf) return;
 
+      const todayKey = getTodayKey();
       if (conf.type === 'daily') {
         appState.daily[id] = false;
       } else {
@@ -580,6 +606,12 @@
           lastDoneDay: null
         };
       }
+
+      // Remove from permanent history
+      if (appState.history && Array.isArray(appState.history[todayKey])) {
+        appState.history[todayKey] = appState.history[todayKey].filter(x => x !== id);
+      }
+
       saveState();
       render();
     }

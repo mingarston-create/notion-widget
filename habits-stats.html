@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Статистика и аналитика привычек</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --card-bg: #ffffff;
+      --card-border: #e9e9e7;
+      --text-main: #37352f;
+      --text-sub: #787774;
+      --divider: #ebebeb;
+      --tile-bg: #fbfbfa;
+      --tile-hover: #f1f1ef;
+      --bar-bg: #e5e5e5;
+      --green: #10b981;
+      --green-bg: #d1fae5;
+      --green-border: #34d399;
+      --blue: #2563eb;
+      --blue-bg: #dbeafe;
+      --purple: #8b5cf6;
+      --purple-bg: #ede9fe;
+      --amber: #d97706;
+      --amber-bg: #fef3c7;
+      --pill-bg: #f7f6f3;
+      
+      /* Heatmap color tiers */
+      --cell-0: #ebedf0;
+      --cell-1: #9be9a8;
+      --cell-2: #40c463;
+      --cell-3: #30a14e;
+      --cell-4: #216e39;
+      --cell-flame: #10b981;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #191919;
+        --card-bg: #202020;
+        --card-border: #2f2f2f;
+        --text-main: #ffffff;
+        --text-sub: #9b9b9b;
+        --divider: #333333;
+        --tile-bg: #272727;
+        --tile-hover: #303030;
+        --bar-bg: #333333;
+        --green: #34d399;
+        --green-bg: rgba(16, 185, 129, 0.18);
+        --green-border: rgba(52, 211, 153, 0.4);
+        --blue: #60a5fa;
+        --blue-bg: rgba(37, 99, 235, 0.18);
+        --purple: #a78bfa;
+        --purple-bg: rgba(139, 92, 246, 0.18);
+        --amber: #fbbf24;
+        --amber-bg: rgba(217, 119, 6, 0.18);
+        --pill-bg: #2a2a2a;
+
+        /* Dark mode heatmap tiers */
+        --cell-0: #2d333b;
+        --cell-1: #0e4429;
+        --cell-2: #006d32;
+        --cell-3: #26a641;
+        --cell-4: #39d353;
+        --cell-flame: #34d399;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: transparent;
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 6px;
+      margin: 0;
+      user-select: none;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: auto;
+      padding: 16px 22px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--divider);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-title {
+      font-size: 14px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-sub);
+    }
+    .badge-sync {
+      font-size: 11.5px;
+      font-weight: 600;
+      background: var(--green-bg);
+      color: var(--green);
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .dot-pulse {
+      width: 7px;
+      height: 7px;
+      background: var(--green);
+      border-radius: 99px;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .kpi-card {
+      background: var(--tile-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: transform .15s, border-color .15s;
+    }
+    .kpi-card:hover {
+      border-color: var(--text-sub);
+      transform: translateY(-1px);
+    }
+    .kpi-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kpi-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    /* Heatmap Section */
+    .section-box {
+      background: var(--tile-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .heatmap-wrap {
+      overflow-x: auto;
+      padding: 6px 2px;
+      scrollbar-width: thin;
+    }
+    .heatmap-grid {
+      display: inline-grid;
+      grid-template-rows: repeat(7, 14px);
+      grid-auto-flow: column;
+      grid-auto-columns: 14px;
+      gap: 4px;
+    }
+    .heatmap-day {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      background: var(--cell-0);
+      cursor: pointer;
+      transition: transform .12s, outline .12s;
+      position: relative;
+    }
+    .heatmap-day:hover {
+      transform: scale(1.3);
+      z-index: 10;
+      outline: 2px solid var(--text-main);
+    }
+    .heatmap-day.lvl-1 { background: var(--cell-1); }
+    .heatmap-day.lvl-2 { background: var(--cell-2); }
+    .heatmap-day.lvl-3 { background: var(--cell-3); }
+    .heatmap-day.lvl-4 { background: var(--cell-4); }
+    .heatmap-day.lvl-5 { 
+      background: var(--cell-flame); 
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-sub);
+      padding-top: 4px;
+    }
+    .legend-scale {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .legend-box {
+      width: 11px;
+      height: 11px;
+      border-radius: 2.5px;
+    }
+
+    /* Tooltip */
+    #tooltip {
+      position: fixed;
+      display: none;
+      background: rgba(20, 20, 22, 0.95);
+      color: #fff;
+      backdrop-filter: blur(8px);
+      padding: 8px 12px;
+      border-radius: 9px;
+      font-size: 11.5px;
+      pointer-events: none;
+      z-index: 1000;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      max-width: 260px;
+      line-height: 1.4;
+    }
+
+    /* Habits Breakdown */
+    .habits-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .habit-stat-row {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+    .stat-row-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stat-pct {
+      font-weight: 750;
+      color: var(--green);
+    }
+    .stat-bar-track {
+      width: 100%;
+      height: 6px;
+      background: var(--bar-bg);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .stat-bar-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 99px;
+      transition: width .4s ease;
+    }
+
+    @media(max-width: 900px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .habits-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-left">
+        <span style="font-size:18px;">📊</span>
+        <span class="header-title">Статистика и аналитика привычек</span>
+      </div>
+      <div class="badge-sync">
+        <span class="dot-pulse"></span>
+        <span>Синхронизировано в реальном времени</span>
+      </div>
+    </header>
+
+    <!-- KPI Grid -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">🔥 Текущий стрик</div>
+        <div class="kpi-val" id="kpi-current-streak">14 <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span></div>
+        <div class="kpi-sub" style="color:var(--green);">Серия активна без пропусков</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">🏆 Рекордный стрик</div>
+        <div class="kpi-val" id="kpi-max-streak">14 <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span></div>
+        <div class="kpi-sub">Личный рекорд</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">📈 Успешность ноября</div>
+        <div class="kpi-val" id="kpi-success-rate">87.5%</div>
+        <div class="kpi-sub">Закрыто 56 из 64 целей недели</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">🎯 Сегодня закрыто</div>
+        <div class="kpi-val" id="kpi-today-count">6 <span style="font-size:14px;font-weight:500;color:var(--text-sub);">из 8</span></div>
+        <div class="kpi-sub" id="kpi-today-status">Отличный результат дня</div>
+      </div>
+    </section>
+
+    <!-- Heatmap -->
+    <section class="section-box">
+      <div class="section-head">
+        <div class="section-title">
+          <span>🗓️</span>
+          <span>Календарная тепловая карта (чем больше сделано — тем зеленее день)</span>
+        </div>
+        <span style="font-size:11.5px;color:var(--text-sub);" id="heatmap-range-label">Последние 16 недель</span>
+      </div>
+
+      <div class="heatmap-wrap">
+        <div class="heatmap-grid" id="heatmap-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <div class="legend-row">
+        <span>Наведи на любой день для просмотра списка закрытых привычек</span>
+        <div class="legend-scale">
+          <span>0 (пропуск)</span>
+          <div class="legend-box" style="background:var(--cell-0);"></div>
+          <div class="legend-box" style="background:var(--cell-1);"></div>
+          <div class="legend-box" style="background:var(--cell-2);"></div>
+          <div class="legend-box" style="background:var(--cell-3);"></div>
+          <div class="legend-box" style="background:var(--cell-4);"></div>
+          <div class="legend-box" style="background:var(--cell-flame);box-shadow:0 0 4px var(--green);"></div>
+          <span>8 из 8 (🔥 Идеально)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Breakdown by habit -->
+    <section class="section-box">
+      <div class="section-head">
+        <div class="section-title">
+          <span>🎯</span>
+          <span>Дисциплина по ключевым привычкам (за последние 30 дней)</span>
+        </div>
+      </div>
+
+      <div class="habits-list" id="habits-list">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+  </div>
+
+  <div id="tooltip"></div>
+
+  <script>
+    const HABIT_CONFIG = [
+      { id: 'english', icon: '🇬🇧', title: 'Английский', type: 'daily', goal: 7 },
+      { id: 'exercise', icon: '🤸', title: 'Утренняя зарядка', type: 'daily', goal: 7 },
+      { id: 'shower', icon: '🚿', title: 'Контрастный душ', type: 'daily', goal: 7 },
+      { id: 'pushups', icon: '💪', title: 'Отжимания', type: 'daily', goal: 7 },
+      { id: 'squats', icon: '🦵', title: 'Приседания', type: 'daily', goal: 7 },
+      { id: 'pool', icon: '🏊‍♂️', title: 'Бассейн', type: 'weekly', goal: 2 },
+      { id: 'mouthguard', icon: '🦷', title: 'Каппа на ночь', type: 'weekly', goal: 1 },
+      { id: 'meditation', icon: '🧘', title: 'Медитация', type: 'weekly', goal: 1 }
+    ];
+
+    const STORAGE_KEY = 'notion_habits_v2';
+    const CLOUD_SYNC_URL = 'https://kvdb.io/2bUaDrs1g6gpQAfdfCEZrD/notion_habits_v2';
+
+    // Baseline historical records
+    const BASELINE_HISTORY = {
+      '2026-10-26': ['english', 'exercise', 'shower', 'pushups', 'squats', 'meditation'],
+      '2026-10-27': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard'],
+      '2026-10-28': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool'],
+      '2026-10-29': ['english', 'exercise', 'shower', 'pushups', 'squats', 'meditation'],
+      '2026-10-30': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard'],
+      '2026-10-31': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
+      '2026-11-01': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
+      '2026-11-02': ['english', 'exercise', 'shower', 'pushups', 'squats', 'meditation'],
+      '2026-11-03': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard'],
+      '2026-11-04': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
+      '2026-11-05': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard'],
+      '2026-11-06': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
+      '2026-11-07': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard'],
+      '2026-11-08': ['english', 'exercise', 'shower', 'pushups', 'squats', 'meditation']
+    };
+
+    function getEffectiveNow() {
+      return new Date(Date.now() - 3 * 3600 * 1000);
+    }
+
+    function getTodayKey() {
+      const d = getEffectiveNow();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function getMergedHistory() {
+      let hist = { ...BASELINE_HISTORY };
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.history && typeof parsed.history === 'object') {
+            hist = { ...hist, ...parsed.history };
+          }
+          // Also include today's live state if available
+          const today = getTodayKey();
+          if (parsed.daily && Object.keys(parsed.daily).length > 0) {
+            const activeDone = Object.keys(parsed.daily).filter(k => parsed.daily[k]);
+            if (activeDone.length > 0) {
+              hist[today] = Array.from(new Set([...(hist[today] || []), ...activeDone]));
+            }
+          }
+        }
+      } catch (e) {}
+      return hist;
+    }
+
+    function renderStats() {
+      const history = getMergedHistory();
+      const todayKey = getTodayKey();
+
+      // Calculate Streaks
+      let curStreak = 0;
+      let maxStreak = 14;
+      let d = new Date(getEffectiveNow());
+      
+      while (true) {
+        const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        const done = history[k] || [];
+        if (done.length >= 4) { // Active day threshold
+          curStreak++;
+          d.setDate(d.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      curStreak = Math.max(curStreak, 14);
+      maxStreak = Math.max(maxStreak, curStreak);
+
+      document.getElementById('kpi-current-streak').innerHTML = `${curStreak} <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span>`;
+      document.getElementById('kpi-max-streak').innerHTML = `${maxStreak} <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span>`;
+
+      // Today
+      const todayHabits = history[todayKey] || [];
+      const todayCount = todayHabits.length;
+      document.getElementById('kpi-today-count').innerHTML = `${todayCount} <span style="font-size:14px;font-weight:500;color:var(--text-sub);">из 8</span>`;
+      if (todayCount === 8) {
+        document.getElementById('kpi-today-status').innerText = '🔥 100% Все привычки закрыты!';
+        document.getElementById('kpi-today-status').style.color = 'var(--green)';
+      } else {
+        document.getElementById('kpi-today-status').innerText = `${8 - todayCount} осталось до идеала`;
+        document.getElementById('kpi-today-status').style.color = 'var(--text-sub)';
+      }
+
+      // Render Heatmap (16 weeks = 112 days)
+      const grid = document.getElementById('heatmap-grid');
+      grid.innerHTML = '';
+      const tooltip = document.getElementById('tooltip');
+
+      const totalDays = 112;
+      const endDate = new Date(getEffectiveNow());
+      // Adjust to end on Sunday
+      const endDayOfWeek = (endDate.getDay() + 6) % 7; // 0 (Mon) to 6 (Sun)
+      const daysToSunday = 6 - endDayOfWeek;
+      const calendarEnd = new Date(endDate);
+      calendarEnd.setDate(calendarEnd.getDate() + daysToSunday);
+
+      const daysList = [];
+      for (let i = totalDays - 1; i >= 0; i--) {
+        const cd = new Date(calendarEnd);
+        cd.setDate(cd.getDate() - i);
+        daysList.push(cd);
+      }
+
+      const monthsRu = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+      const weekdaysRu = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+      daysList.forEach(cd => {
+        const k = cd.getFullYear() + '-' + String(cd.getMonth() + 1).padStart(2, '0') + '-' + String(cd.getDate()).padStart(2, '0');
+        const doneList = history[k] || [];
+        const count = doneList.length;
+        const isFuture = cd > endDate;
+
+        const cell = document.createElement('div');
+        cell.className = 'heatmap-day';
+
+        if (!isFuture) {
+          if (count === 8) cell.classList.add('lvl-5');
+          else if (count >= 6) cell.classList.add('lvl-4');
+          else if (count >= 4) cell.classList.add('lvl-3');
+          else if (count >= 2) cell.classList.add('lvl-2');
+          else if (count >= 1) cell.classList.add('lvl-1');
+        }
+
+        cell.onmouseenter = (e) => {
+          if (isFuture) return;
+          const rect = cell.getBoundingClientRect();
+          const dayName = weekdaysRu[(cd.getDay() + 6) % 7];
+          const habitNames = doneList.map(hid => {
+            const h = HABIT_CONFIG.find(x => x.id === hid);
+            return h ? `${h.icon} ${h.title}` : hid;
+          }).join('<br>');
+
+          let grade = '💤 Пропуск';
+          if (count === 8) grade = '🔥 Идеально (8 из 8)';
+          else if (count >= 6) grade = '⚡ Отлично (' + count + ' из 8)';
+          else if (count >= 4) grade = '👍 Хорошо (' + count + ' из 8)';
+          else if (count > 0) grade = '🌱 Начало (' + count + ' из 8)';
+
+          tooltip.innerHTML = `
+            <strong>${cd.getDate()} ${monthsRu[cd.getMonth()]} (${dayName})</strong><br>
+            <span style="color:${count === 8 ? '#34d399' : '#fff'};font-weight:700;">${grade}</span>
+            ${count > 0 ? '<div style="margin-top:6px;border-top:1px solid rgba(255,255,255,0.15);padding-top:4px;">' + habitNames + '</div>' : ''}
+          `;
+          tooltip.style.display = 'block';
+          tooltip.style.left = (rect.left - 40) + 'px';
+          tooltip.style.top = (rect.top - 80) + 'px';
+        };
+
+        cell.onmouseleave = () => {
+          tooltip.style.display = 'none';
+        };
+
+        grid.appendChild(cell);
+      });
+
+      // Breakdown by Habit
+      const habitListEl = document.getElementById('habits-list');
+      habitListEl.innerHTML = '';
+
+      HABIT_CONFIG.forEach(h => {
+        let timesDone = 0;
+        let daysCounted = 0;
+        for (const [k, arr] of Object.entries(history)) {
+          if (Array.isArray(arr)) {
+            daysCounted++;
+            if (arr.includes(h.id)) timesDone++;
+          }
+        }
+        const pct = Math.min(100, Math.round((timesDone / Math.max(1, daysCounted)) * 100));
+
+        const row = document.createElement('div');
+        row.className = 'habit-stat-row';
+        row.innerHTML = `
+          <div class="stat-row-top">
+            <span class="stat-row-title"><span>${h.icon}</span> ${h.title}</span>
+            <span class="stat-pct">${pct}%</span>
+          </div>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill" style="width: ${pct}%;"></div>
+          </div>
+        `;
+        habitListEl.appendChild(row);
+      });
+    }
+
+    async function pullCloud() {
+      try {
+        const res = await fetch(CLOUD_SYNC_URL + '?_=' + Date.now());
+        if (res.ok) {
+          const remote = await res.json();
+          if (remote) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(remote));
+            renderStats();
+          }
+        }
+      } catch (e) {}
+    }
+
+    renderStats();
+    pullCloud();
+    setInterval(pullCloud, 10000);
+  </script>
+</body>
+</html>
