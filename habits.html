@@ -397,7 +397,7 @@
     </div>
 
     <footer class="footer-bar">
-      <span>Прогресс: <strong id="pct-label" style="color:var(--text-main);">0%</strong></span>
+      <span>Ежедневные: <strong id="pct-label" style="color:var(--text-main);">0%</strong></span>
       <div class="track"><div class="fill" id="total-fill"></div></div>
       <button type="button" class="toggle-btn" id="toggle-completed-btn" onclick="toggleCompletedTray()" style="display:none;">
         <span id="toggle-icon">👁️</span>
@@ -407,6 +407,7 @@
     </footer>
   </main>
 
+  <script src="habits-metrics.js?v=monthly-v1"></script>
   <script src="habits-sync.js?v=3"></script>
   <script>
     let showCompletedTray=false, current=null, busy=new Set();
@@ -418,7 +419,7 @@
       const icon=document.createElement('span');icon.className='habit-icon';icon.textContent=h.icon;
       const title=document.createElement('span');title.className='habit-title';title.textContent=h.title;title.title=h.title;
       const badge=document.createElement('span');badge.className='habit-badge';badge.textContent=h.done_today?'Сегодня ✓':h.week_done>=h.goal?'План недели ✓':'Отметить';
-      const sub=document.createElement('span');sub.className='habit-sub';sub.textContent='За неделю: '+h.week_done+' / '+h.goal;
+      const sub=document.createElement('span');sub.className='habit-sub';sub.textContent=h.type==='daily'?'Каждый день':'За неделю: '+h.week_done+' / '+h.goal;
       button.append(icon,title,badge,sub);button.setAttribute('aria-pressed',String(h.done_today));
       button.onclick=async()=>{if(busy.has(h.id))return;busy.add(h.id);button.disabled=true;try{await HabitsSync.setHabit(h.id,!h.done_today);}catch(e){status.textContent='Не удалось сохранить отметку: '+e.message;}finally{busy.delete(h.id);render(current);}};
       return button;
@@ -428,7 +429,7 @@
       status.textContent=value.error || (value.pending ? 'Сохранено на устройстве · ждут отправки: '+value.pending : value.data?.sync.pending_days ? 'Сохранено на сервере · передаём в Notion' : value.data ? 'Сохранено в Notion' : 'Загружаем привычки…');
       if(value.data?.sync.error && !value.error && !value.pending) status.textContent='Сохранено на сервере · Notion временно недоступен';
       if(!value.data)return;
-      const habits=Object.values(value.data.habits),active=document.getElementById('active-grid'),completed=document.getElementById('completed-grid');active.replaceChildren();completed.replaceChildren();
+      const habits=Object.values(value.data.habits).sort((a,b)=>(a.type==='weekly')-(b.type==='weekly')),active=document.getElementById('active-grid'),completed=document.getElementById('completed-grid');active.replaceChildren();completed.replaceChildren();
       for(const h of habits)(h.done_today?completed:active).append(makeCard(h));
       const count=habits.filter(h=>h.done_today).length,total=habits.length;
       if(count===total && total){const text=document.createElement('p');text.textContent='🎉 Все привычки на сегодня выполнены';active.append(text);}
@@ -437,9 +438,10 @@
       document.getElementById('toggle-completed-btn').style.display=count?'inline-flex':'none';
       document.getElementById('toggle-text').textContent=showCompletedTray?'Скрыть выполненные':'Скрыто: '+count;
       document.getElementById('completed-count-label').textContent=count+' из '+total;
-      document.getElementById('summary-label').textContent=count+' из '+total;
-      document.getElementById('pct-label').textContent=(total?Math.round(100*count/total):0)+'%';
-      document.getElementById('total-fill').style.width=(total?100*count/total:0)+'%';
+      const daily=HabitMetrics.day(value.data,value.data.today);
+      document.getElementById('summary-label').textContent=daily.count+' из '+daily.total;
+      document.getElementById('pct-label').textContent=(daily.total?Math.round(100*daily.count/daily.total):0)+'%';
+      document.getElementById('total-fill').style.width=(daily.total?100*daily.count/daily.total:0)+'%';
       document.getElementById('current-date').textContent=new Date(value.data.today+'T12:00:00Z').toLocaleDateString('ru-RU',{timeZone:'UTC',day:'numeric',month:'short'})+' · день с 03:00 МСК';
     }
     for(const id of ['active-grid','completed-grid'])document.getElementById(id).addEventListener('wheel',e=>{if(e.deltaY && !e.deltaX)e.currentTarget.scrollLeft+=e.deltaY;},{passive:true});
