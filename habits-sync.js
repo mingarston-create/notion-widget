@@ -155,7 +155,13 @@
     try {
       const data=await request('/status');
       if (!data.sync.initialized) throw new Error('Подготавливаем историю. Попробуем снова автоматически.');
-      await saveSnapshot(data); if(isPhone && deviceId && !clock().primary_device)await updateClock(); remoteError='';error='';await readLocal();notify();
+      await saveSnapshot(data);
+      remoteError='';error='';
+      const sharedClock=clock();
+      // Reuse the existing refresh; only the primary phone may follow travel.
+      if(isPhone && deviceId && (!sharedClock.primary_device ||
+        (sharedClock.primary_device===deviceId && sharedClock.timezone!==detectedZone())))await updateClock();
+      await readLocal();notify();
     } catch (e) { remoteError=e.status===401 ? 'Ключ доступа не принят. Открой виджет из Notion.' : 'Нет связи с сервером. Нажатия сохраняются на этом устройстве.';notify(); }
   }
   async function setHabit(id, done, date) {
