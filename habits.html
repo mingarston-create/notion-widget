@@ -71,10 +71,10 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      min-height: calc(100% - 12px);
+      min-height: 0;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-start;
       box-sizing: border-box;
     }
 
@@ -110,7 +110,8 @@
     }
 
     .content-wrap {
-      flex: 1;
+      flex: none;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -118,15 +119,19 @@
 
     .grid {
       display: flex;
+      flex-wrap: nowrap;
+      min-width: 0;
+      width: 100%;
+      align-items: stretch;
       overflow-x: auto;
       gap: 10px;
       padding-bottom: 4px;
       -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      flex: 1;
+      scrollbar-width: thin;
+      flex: none;
     }
     .grid::-webkit-scrollbar {
-      display: none;
+      height: 5px;
     }
 
     .habit-card {
@@ -147,7 +152,7 @@
       flex: 0 0 148px;
       min-width: 148px;
       min-height: 96px;
-      align-self: flex-start;
+      align-self: stretch;
     }
 
     .habit-card:hover {
@@ -341,7 +346,7 @@
       .dashboard {
         padding: 8px 12px;
         border-radius: 14px;
-        min-height: calc(100% - 8px);
+        min-height: 0;
       }
       .heading { margin-bottom: 6px; }
       .grid {
@@ -384,38 +389,22 @@
         <!-- Rendered by JS -->
       </section>
 
-      <!-- Completed Habits (hidden by default) -->
-      <section class="completed-section" id="completed-section" style="display:none;">
-        <div class="completed-header">
-          <span>Выполнено сегодня (нажми для отмены)</span>
-          <span id="completed-count-label">0</span>
-        </div>
-        <div class="grid" id="completed-grid">
-          <!-- Rendered by JS -->
-        </div>
-      </section>
     </div>
 
-    <details id="weekly-completed" style="margin:12px 0"><summary id="weekly-summary" style="cursor:pointer">Выполнено за неделю</summary><div class="grid" id="weekly-grid"></div></details>
     <footer class="footer-bar">
       <span>Ежедневные: <strong id="pct-label" style="color:var(--text-main);">0%</strong></span>
       <div class="track"><div class="fill" id="total-fill"></div></div>
-      <button type="button" class="toggle-btn" id="toggle-completed-btn" onclick="toggleCompletedTray()" style="display:none;">
-        <span id="toggle-icon">👁️</span>
-        <span id="toggle-text">Скрыто: 0</span>
-      </button>
       <span id="summary-label">—</span>
     </footer>
   </main>
 
   <script src="habits-metrics.js?v=monthly-v1"></script>
-  <script src="habits-sync.js?v=compact-status-v1"></script>
+  <script src="habits-sync.js?v=single-row-v1"></script>
   <script>
-    let showCompletedTray=false, current=null, busy=new Set();
+    let current=null, busy=new Set();
     const status=document.getElementById('sync-status');
-    function toggleCompletedTray(){showCompletedTray=!showCompletedTray;render(current);}
     function makeCard(h){
-      const button=document.createElement('button');button.type='button';button.className='habit-card'+(h.done_today?' completed':'');button.disabled=busy.has(h.id)||!current.ready||(h.type==='weekly'&&h.week_done>=h.goal&&!h.done_today);
+      const button=document.createElement('button');button.type='button';button.className='habit-card'+(h.done_today||(h.type==='weekly'&&h.week_done>=h.goal)?' completed':'');button.disabled=busy.has(h.id)||!current.ready||(h.type==='weekly'&&h.week_done>=h.goal&&!h.done_today);
       const icon=document.createElement('span');icon.className='habit-icon';icon.textContent=h.icon;
       const title=document.createElement('span');title.className='habit-title';title.textContent=h.title;title.title=h.title;
       const badge=document.createElement('span');badge.className='habit-badge';badge.textContent=h.done_today?'Сегодня ✓':h.week_done>=h.goal?'План недели ✓':'Отметить';
@@ -428,24 +417,17 @@
       current=value;if(!value)return;
       HabitsSync.renderStatus(status,value);
       if(!value.data)return;
-      const habits=Object.values(value.data.habits).sort((a,b)=>(a.type==='weekly')-(b.type==='weekly')),active=document.getElementById('active-grid'),completed=document.getElementById('completed-grid');active.replaceChildren();completed.replaceChildren();
-      const weekly=document.getElementById('weekly-grid');weekly.replaceChildren();
-      const closed=h=>h.type==='weekly'&&h.week_done>=h.goal;
-      for(const h of habits)(closed(h)?weekly:h.done_today?completed:active).append(makeCard(h));
-      const closedCount=habits.filter(closed).length;document.getElementById('weekly-completed').hidden=!closedCount;document.getElementById('weekly-summary').textContent='Выполнено за неделю · '+closedCount;
-      const count=habits.filter(h=>h.done_today&&!closed(h)).length,total=habits.length;
-      if(count+closedCount===total && total){const text=document.createElement('p');text.textContent='🎉 Все привычки на сегодня выполнены';active.append(text);}
-      if(!total){const text=document.createElement('p');text.textContent='Добавь привычку в базу Notion — кнопка появится автоматически.';active.append(text);}
-      document.getElementById('completed-section').style.display=showCompletedTray&&count?'block':'none';
-      document.getElementById('toggle-completed-btn').style.display=count?'inline-flex':'none';
-      document.getElementById('toggle-text').textContent=showCompletedTray?'Скрыть выполненные':'Скрыто: '+count;
-      document.getElementById('completed-count-label').textContent=count+' из '+total;
+      const habits=Object.values(value.data.habits).sort((a,b)=>(a.type==='weekly')-(b.type==='weekly')),active=document.getElementById('active-grid');
+      const scroll=active.scrollLeft;active.replaceChildren();
+      for(const h of habits)active.append(makeCard(h));
+      active.scrollLeft=scroll;
+      if(!habits.length){const text=document.createElement('p');text.textContent='Добавь привычку в базу Notion — кнопка появится автоматически.';active.append(text);}
       const daily=HabitMetrics.day(value.data,value.data.today);
       document.getElementById('summary-label').textContent=daily.count+' из '+daily.total;
       document.getElementById('pct-label').textContent=(daily.total?Math.round(100*daily.count/daily.total):0)+'%';
       document.getElementById('total-fill').style.width=(daily.total?100*daily.count/daily.total:0)+'%';
     }
-    for(const id of ['active-grid','completed-grid'])document.getElementById(id).addEventListener('wheel',e=>{if(e.deltaY && !e.deltaX)e.currentTarget.scrollLeft+=e.deltaY;},{passive:true});
+    for(const id of ['active-grid'])document.getElementById(id).addEventListener('wheel',e=>{if(e.deltaY && !e.deltaX)e.currentTarget.scrollLeft+=e.deltaY;},{passive:true});
     HabitsSync.subscribe(render);HabitsSync.start();
   </script>
 </body>

@@ -34,7 +34,9 @@
     let box=document.getElementById('tracker-clock');
     if(!box){box=document.createElement('div');box.id='tracker-clock';box.style.cssText='font:12px system-ui;padding:8px 0;line-height:1.5;color:inherit';(document.querySelector('footer')||document.body).before(box);}
     box.replaceChildren();
-    const c=clock();box.append('День с 03:00 · '+c.timezone+(c.primary_device?' · время основного телефона':' · ожидаем основного телефона'));
+    const c=clock();
+    const needsChoice=isPhone && deviceId && snapshot && (c.primary_device!==deviceId || c.timezone!==detectedZone());
+    box.hidden=!needsChoice;
     if(isPhone && deviceId && snapshot && (c.primary_device!==deviceId || c.timezone!==detectedZone())){
       const button=document.createElement('button');button.type='button';button.style.cssText='margin:6px;padding:6px 10px;border-radius:8px;cursor:pointer';
       button.textContent=c.primary_device && c.primary_device!==deviceId?'Сделать этот телефон основным':'Использовать '+detectedZone();button.disabled=settingClock;
