@@ -208,7 +208,8 @@
       line-height: 1.25;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
+      white-space: normal;
+      min-height: 34px;
     }
 
     .habit-sub {
@@ -402,352 +403,46 @@
         <span id="toggle-icon">👁️</span>
         <span id="toggle-text">Скрыто: 0</span>
       </button>
-      <span id="summary-label">0 из 8</span>
+      <span id="summary-label">—</span>
     </footer>
   </main>
 
+  <script src="habits-sync.js?v=3"></script>
   <script>
-    const HABIT_CONFIG = [
-      { id: 'english', icon: '🇬🇧', title: 'Английский', type: 'daily', goal: 7, label: 'Каждый день', action: '15 мин практики' },
-      { id: 'exercise', icon: '🤸', title: 'Зарядка', type: 'daily', goal: 7, label: 'Каждый день', action: 'Разгони кровь' },
-      { id: 'shower', icon: '🚿', title: 'Контрастный душ', type: 'daily', goal: 7, label: 'Каждый день', action: 'Бодрый заряд' },
-      { id: 'pushups', icon: '💪', title: 'Отжимания', type: 'daily', goal: 7, label: 'Каждый день', action: 'Сделай подход' },
-      { id: 'squats', icon: '🦵', title: 'Приседания', type: 'daily', goal: 7, label: 'Каждый день', action: 'Включи ноги' },
-      { id: 'pool', icon: '🏊‍♂️', title: 'Бассейн', type: 'weekly', goal: 2, label: '2 р/нед', action: 'Время заплыва' },
-      { id: 'mouthguard', icon: '🦷', title: 'Каппа на ночь', type: 'weekly', goal: 1, label: '1 р/нед', action: 'Перед сном' },
-      { id: 'meditation', icon: '🧘', title: 'Медитация', type: 'weekly', goal: 1, label: '1 р/нед', action: 'Очисти голову' }
-    ];
-
-    const STORAGE_KEY = 'notion_habits_v2';
-    const SERVER_API = 'https://153.76.192.118:8443/api/habits';
-    let showCompletedTray = false;
-
-    // Shift time by -3 hours so new day begins at 03:00 AM sharp
-    function getEffectiveNow() {
-      return new Date(Date.now() - 3 * 3600 * 1000);
+    let showCompletedTray=false, current=null, busy=new Set();
+    const status=document.createElement('div');status.id='sync-status';status.setAttribute('role','status');status.style.cssText='font-size:12px;padding:8px 0;color:var(--text-sub);line-height:1.4';
+    document.querySelector('.heading').after(status);
+    function toggleCompletedTray(){showCompletedTray=!showCompletedTray;render(current);}
+    function makeCard(h){
+      const button=document.createElement('button');button.type='button';button.className='habit-card'+(h.done_today?' completed':'');button.disabled=busy.has(h.id)||!current.ready;
+      const icon=document.createElement('span');icon.className='habit-icon';icon.textContent=h.icon;
+      const title=document.createElement('span');title.className='habit-title';title.textContent=h.title;title.title=h.title;
+      const badge=document.createElement('span');badge.className='habit-badge';badge.textContent=h.done_today?'Сделано сегодня ✅':h.week_done>=h.goal?'План недели выполнен':'Отметить выполнение';
+      const sub=document.createElement('span');sub.className='habit-sub';sub.textContent='За неделю: '+h.week_done+' / '+h.goal;
+      button.append(icon,title,badge,sub);button.setAttribute('aria-pressed',String(h.done_today));
+      button.onclick=async()=>{if(busy.has(h.id))return;busy.add(h.id);button.disabled=true;try{await HabitsSync.setHabit(h.id,!h.done_today);}catch(e){status.textContent='Не удалось сохранить отметку: '+e.message;}finally{busy.delete(h.id);render(current);}};
+      return button;
     }
-
-    function getTodayKey() {
-      const d = getEffectiveNow();
-      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    function render(value){
+      current=value;if(!value)return;
+      status.textContent=value.error || (value.pending ? 'Сохранено на устройстве · ждут отправки: '+value.pending : value.data?.sync.pending_days ? 'Сохранено на сервере · передаём в Notion' : value.data ? 'Сохранено в Notion' : 'Загружаем привычки…');
+      if(value.data?.sync.error && !value.error && !value.pending) status.textContent='Сохранено на сервере · Notion временно недоступен';
+      if(!value.data)return;
+      const habits=Object.values(value.data.habits),active=document.getElementById('active-grid'),completed=document.getElementById('completed-grid');active.replaceChildren();completed.replaceChildren();
+      for(const h of habits)(h.done_today?completed:active).append(makeCard(h));
+      const count=habits.filter(h=>h.done_today).length,total=habits.length;
+      if(count===total && total){const text=document.createElement('p');text.textContent='🎉 Все привычки на сегодня выполнены';active.append(text);}
+      if(!total){const text=document.createElement('p');text.textContent='Добавь привычку в базу Notion — кнопка появится автоматически.';active.append(text);}
+      document.getElementById('completed-section').style.display=showCompletedTray&&count?'block':'none';
+      document.getElementById('toggle-completed-btn').style.display=count?'inline-flex':'none';
+      document.getElementById('toggle-text').textContent=showCompletedTray?'Скрыть выполненные':'Скрыто: '+count;
+      document.getElementById('completed-count-label').textContent=count+' из '+total;
+      document.getElementById('summary-label').textContent=count+' из '+total;
+      document.getElementById('pct-label').textContent=(total?Math.round(100*count/total):0)+'%';
+      document.getElementById('total-fill').style.width=(total?100*count/total:0)+'%';
+      document.getElementById('current-date').textContent=new Date(value.data.today+'T12:00:00Z').toLocaleDateString('ru-RU',{timeZone:'UTC',day:'numeric',month:'short'})+' · день с 03:00 МСК';
     }
-
-    function getWeekKey() {
-      const d = getEffectiveNow();
-      const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      const day = (date.getDay() + 6) % 7 + 1; // 1 (Mon) - 7 (Sun)
-      date.setDate(date.getDate() - day + 4); // Thursday of this week
-      const year = date.getFullYear();
-      const firstJan = new Date(year, 0, 1);
-      const daysSinceFirstJan = Math.round((date - firstJan) / 86400000);
-      const weekNo = Math.floor(daysSinceFirstJan / 7) + 1;
-      return year + '-W' + String(weekNo).padStart(2, '0');
-    }
-
-    function loadState() {
-      const todayKey = getTodayKey();
-      const weekKey = getWeekKey();
-      let state = {
-        lastDay: todayKey,
-        lastWeek: weekKey,
-        daily: {},
-        weekly: {},
-        history: {}
-      };
-
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('notion_habits_v1');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.lastDay === todayKey) {
-            state.daily = parsed.daily || {};
-          }
-          if (parsed.lastWeek === weekKey && parsed.weekly) {
-            for (const [k, v] of Object.entries(parsed.weekly)) {
-              if (typeof v === 'number') {
-                state.weekly[k] = { count: v, lastDoneDay: parsed.lastDay === todayKey ? todayKey : null };
-              } else if (v && typeof v === 'object') {
-                state.weekly[k] = v;
-              }
-            }
-          }
-          if (parsed.history && typeof parsed.history === 'object') {
-            state.history = parsed.history;
-          }
-        }
-      } catch (e) {
-        console.error('Error loading state:', e);
-      }
-      return state;
-    }
-
-    let appState = loadState();
-
-    function saveState() {
-      appState.lastDay = getTodayKey();
-      appState.lastWeek = getWeekKey();
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      } catch (e) {
-        console.error('Save error:', e);
-      }
-    }
-
-    async function pullFromCloud() {
-      try {
-        const res = await fetch(SERVER_API + '/status?_=' + Date.now());
-        if (!res.ok) return;
-        const remote = await res.json();
-        const todayKey = getTodayKey();
-
-        let changed = false;
-
-        if (remote.habits) {
-          for (const [id, info] of Object.entries(remote.habits)) {
-            const conf = HABIT_CONFIG.find(h => h.id === id);
-            if (!conf) continue;
-            if (conf.type === 'daily') {
-              if (appState.daily[id] !== info.done_today) {
-                appState.daily[id] = info.done_today;
-                changed = true;
-              }
-            } else {
-              const cur = appState.weekly[id] || { count: 0, lastDoneDay: null };
-              if (cur.count !== info.week_done || (info.done_today && cur.lastDoneDay !== todayKey)) {
-                appState.weekly[id] = {
-                  count: info.week_done,
-                  lastDoneDay: info.done_today ? todayKey : cur.lastDoneDay
-                };
-                changed = true;
-              }
-            }
-          }
-        }
-
-        if (changed) {
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch(e){}
-          render();
-        }
-      } catch (e) {
-        // Silent fallback
-      }
-    }
-
-    function isHabitDoneToday(h) {
-      if (h.type === 'daily') {
-        return !!appState.daily[h.id];
-      }
-      const w = appState.weekly[h.id] || { count: 0, lastDoneDay: null };
-      const todayKey = getTodayKey();
-      return w.lastDoneDay === todayKey || w.count >= h.goal;
-    }
-
-    async function completeHabit(id) {
-      const conf = HABIT_CONFIG.find(h => h.id === id);
-      if (!conf) return;
-
-      const todayKey = getTodayKey();
-      if (conf.type === 'daily') {
-        appState.daily[id] = true;
-      } else {
-        const cur = appState.weekly[id] || { count: 0, lastDoneDay: null };
-        appState.weekly[id] = {
-          count: Math.min(conf.goal, (cur.count || 0) + 1),
-          lastDoneDay: todayKey
-        };
-      }
-
-      saveState();
-      render();
-
-      // Send to server -> updates Notion database
-      try {
-        await fetch(SERVER_API + '/toggle', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: id, done: true })
-        });
-      } catch (e) {
-        console.error('Notion server sync error:', e);
-      }
-    }
-
-    async function uncompleteHabit(id) {
-      const conf = HABIT_CONFIG.find(h => h.id === id);
-      if (!conf) return;
-
-      const todayKey = getTodayKey();
-      if (conf.type === 'daily') {
-        appState.daily[id] = false;
-      } else {
-        const cur = appState.weekly[id] || { count: 0, lastDoneDay: null };
-        appState.weekly[id] = {
-          count: Math.max(0, (cur.count || 0) - 1),
-          lastDoneDay: null
-        };
-      }
-
-      saveState();
-      render();
-
-      // Send to server -> updates Notion database
-      try {
-        await fetch(SERVER_API + '/toggle', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: id, done: false })
-        });
-      } catch (e) {
-        console.error('Notion server sync error:', e);
-      }
-    }
-
-    function toggleCompletedTray() {
-      showCompletedTray = !showCompletedTray;
-      render();
-    }
-
-    function createCard(h, isCompleted) {
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = 'habit-card ' + (isCompleted ? 'completed' : '');
-      card.setAttribute('aria-label', h.title + (isCompleted ? ' (выполнено)' : ''));
-      card.onclick = () => isCompleted ? uncompleteHabit(h.id) : completeHabit(h.id);
-
-      let badgeText = h.label;
-      let subHtml = '';
-
-      if (h.type === 'daily') {
-        if (isCompleted) {
-          badgeText = 'Сделано ✅';
-          subHtml = '<span style="color:var(--green)">Закрыто · нажми для отмены</span>';
-        } else {
-          badgeText = 'Каждый день';
-          subHtml = `<span>${h.action}</span>`;
-        }
-      } else {
-        const w = appState.weekly[h.id] || { count: 0, lastDoneDay: null };
-        const count = w.count || 0;
-        let dots = '';
-        for (let i = 0; i < h.goal; i++) {
-          dots += `<span class="dot ${i < count ? 'filled' : ''}"></span>`;
-        }
-
-        if (isCompleted) {
-          badgeText = count + '/' + h.goal + ' ✅';
-          subHtml = `<div class="weekly-dots">${dots}</div><span style="color:var(--green)">${count >= h.goal ? 'План недели закрыт' : 'Сделано сегодня'}</span>`;
-        } else {
-          badgeText = count + '/' + h.goal + ' в нед';
-          subHtml = `<div class="weekly-dots">${dots}</div><span>${h.action}</span>`;
-        }
-      }
-
-      card.innerHTML = `
-        <div class="card-top">
-          <span class="habit-icon">${h.icon}</span>
-          <span class="habit-badge">${badgeText}</span>
-        </div>
-        <div class="habit-title">${h.title}</div>
-        <div class="habit-sub">${subHtml}</div>
-      `;
-      return card;
-    }
-
-    function render() {
-      // Check for day/week rollover
-      const todayKey = getTodayKey();
-      const weekKey = getWeekKey();
-      if (appState.lastDay !== todayKey || appState.lastWeek !== weekKey) {
-        appState = loadState();
-      }
-
-      const activeGrid = document.getElementById('active-grid');
-      const completedGrid = document.getElementById('completed-grid');
-      const completedSection = document.getElementById('completed-section');
-      const toggleBtn = document.getElementById('toggle-completed-btn');
-
-      activeGrid.innerHTML = '';
-      completedGrid.innerHTML = '';
-
-      let activeCount = 0;
-      let completedCount = 0;
-
-      HABIT_CONFIG.forEach(h => {
-        const done = isHabitDoneToday(h);
-        if (done) {
-          completedCount++;
-          completedGrid.appendChild(createCard(h, true));
-        } else {
-          activeCount++;
-          activeGrid.appendChild(createCard(h, false));
-        }
-      });
-
-      // All done celebration state
-      if (activeCount === 0) {
-        activeGrid.innerHTML = `
-          <div class="all-done-banner">
-            <span class="all-done-icon">🎉</span>
-            <div>
-              <div class="all-done-title">Все 8 привычек на сегодня закрыты!</div>
-              <div class="all-done-sub">Отличный день! Следующий цикл откроется в 03:00 ночи.</div>
-            </div>
-          </div>
-        `;
-      }
-
-      // Update completed tray visibility
-      if (completedCount > 0) {
-        toggleBtn.style.display = 'inline-flex';
-        document.getElementById('toggle-text').innerText = (showCompletedTray ? 'Скрыть готовые (' : 'Скрыто: ') + completedCount + (showCompletedTray ? ')' : '');
-        completedSection.style.display = showCompletedTray ? 'block' : 'none';
-        document.getElementById('completed-count-label').innerText = completedCount + ' из ' + HABIT_CONFIG.length;
-      } else {
-        toggleBtn.style.display = 'none';
-        completedSection.style.display = 'none';
-      }
-
-      // Overall Progress
-      const total = HABIT_CONFIG.length;
-      const pct = Math.round((completedCount / total) * 100);
-
-      document.getElementById('pct-label').innerText = pct + '%';
-      document.getElementById('summary-label').innerText = completedCount + ' из ' + total;
-      document.getElementById('total-fill').style.width = pct + '%';
-
-      // Effective Date
-      const nowEff = getEffectiveNow();
-      const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-      const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-      document.getElementById('current-date').innerText = days[nowEff.getDay()] + ', ' + nowEff.getDate() + ' ' + months[nowEff.getMonth()];
-    }
-
-    // Horizontal wheel scroll support for traditional mice
-    ['active-grid', 'completed-grid'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('wheel', (e) => {
-          if (e.deltaY !== 0 && e.deltaX === 0) {
-            el.scrollLeft += e.deltaY;
-          }
-        }, { passive: true });
-      }
-    });
-
-    render();
-
-    // Pull from cloud immediately on load
-    pullFromCloud();
-
-    // Periodic cloud sync and 03:00 AM check every 10 seconds
-    setInterval(() => {
-      const todayKey = getTodayKey();
-      if (appState.lastDay !== todayKey) {
-        appState = loadState();
-        render();
-      }
-      pullFromCloud();
-    }, 10000);
+    HabitsSync.subscribe(render);HabitsSync.start();
   </script>
 </body>
 </html>

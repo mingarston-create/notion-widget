@@ -326,7 +326,7 @@
       </div>
       <div class="badge-sync">
         <span class="dot-pulse"></span>
-        <span>Синхронизировано в реальном времени</span>
+        <span>Загрузка…</span>
       </div>
     </header>
 
@@ -334,23 +334,23 @@
     <section class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label">🔥 Текущий стрик</div>
-        <div class="kpi-val" id="kpi-current-streak">7 <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span></div>
-        <div class="kpi-sub" style="color:var(--green);">Серия активна без пропусков</div>
+        <div class="kpi-val" id="kpi-current-streak">—</div>
+        <div class="kpi-sub" style="color:var(--green);">Ожидаем данные</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">🏆 Рекордный стрик</div>
-        <div class="kpi-val" id="kpi-max-streak">7 <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span></div>
-        <div class="kpi-sub">Личный рекорд</div>
+        <div class="kpi-val" id="kpi-max-streak">—</div>
+        <div class="kpi-sub">Ожидаем данные</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">📈 Успешность ноября</div>
-        <div class="kpi-val" id="kpi-success-rate">87.5%</div>
-        <div class="kpi-sub">Закрыто 56 из 64 целей недели</div>
+        <div class="kpi-label">📈 Отметки за текущий месяц</div>
+        <div class="kpi-val" id="kpi-success-rate">—</div>
+        <div class="kpi-sub">Ожидаем данные</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">🎯 Сегодня закрыто</div>
-        <div class="kpi-val" id="kpi-today-count">6 <span style="font-size:14px;font-weight:500;color:var(--text-sub);">из 8</span></div>
-        <div class="kpi-sub" id="kpi-today-status">Отличный результат дня</div>
+        <div class="kpi-val" id="kpi-today-count">—</div>
+        <div class="kpi-sub" id="kpi-today-status">Ожидаем данные</div>
       </div>
     </section>
 
@@ -380,7 +380,7 @@
           <div class="legend-box" style="background:var(--cell-3);"></div>
           <div class="legend-box" style="background:var(--cell-4);"></div>
           <div class="legend-box" style="background:var(--cell-flame);box-shadow:0 0 4px var(--green);"></div>
-          <span>8 из 8 (🔥 Идеально)</span>
+          <span>Все привычки дня</span>
         </div>
       </div>
     </section>
@@ -402,207 +402,54 @@
 
   <div id="tooltip"></div>
 
+  <script src="habits-sync.js?v=3"></script>
   <script>
-    const HABIT_CONFIG = [
-      { id: 'english', icon: '🇬🇧', title: 'Английский', type: 'daily', goal: 7 },
-      { id: 'exercise', icon: '🤸', title: 'Утренняя зарядка', type: 'daily', goal: 7 },
-      { id: 'shower', icon: '🚿', title: 'Контрастный душ', type: 'daily', goal: 7 },
-      { id: 'pushups', icon: '💪', title: 'Отжимания', type: 'daily', goal: 7 },
-      { id: 'squats', icon: '🦵', title: 'Приседания', type: 'daily', goal: 7 },
-      { id: 'pool', icon: '🏊‍♂️', title: 'Бассейн', type: 'weekly', goal: 2 },
-      { id: 'mouthguard', icon: '🦷', title: 'Каппа на ночь', type: 'weekly', goal: 1 },
-      { id: 'meditation', icon: '🧘', title: 'Медитация', type: 'weekly', goal: 1 }
-    ];
-
-    const STORAGE_KEY = 'notion_habits_v2';
-    const SERVER_API = 'https://153.76.192.118:8443/api/habits';
-
-    // Baseline historical records (starting from November 1st, 2026)
-    const BASELINE_HISTORY = {
-      '2026-11-01': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
-      '2026-11-02': ['english', 'exercise', 'shower', 'pushups', 'squats', 'meditation'],
-      '2026-11-03': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard'],
-      '2026-11-04': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
-      '2026-11-05': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard'],
-      '2026-11-06': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
-      '2026-11-07': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard']
-    };
-
-    function getEffectiveNow() {
-      return new Date(Date.now() - 3 * 3600 * 1000);
-    }
-
-    function getTodayKey() {
-      const d = getEffectiveNow();
-      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    }
-
-    function getMergedHistory(remoteData) {
-      let hist = { ...BASELINE_HISTORY };
-      if (remoteData && remoteData.stats && remoteData.stats.history) {
-        hist = { ...hist, ...remoteData.stats.history };
-      } else {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed.stats && parsed.stats.history) {
-              hist = { ...hist, ...parsed.stats.history };
-            }
-          }
-        } catch (e) {}
+    function text(id,value){document.getElementById(id).textContent=value;}
+    function render(value){
+      document.querySelector('.badge-sync').textContent=value.error || (value.pending?'Ожидают отправки: '+value.pending:value.data?.sync.error?'Notion недоступен · записи сохранены':value.data?.sync.pending_days?'Передаём в Notion':value.data?'Данные из журнала':'Загрузка…');
+      if(!value.data)return;
+      const data=value.data,history=data.stats.history,day=data.today,catalog=data.catalog||data.habits;
+      let best=0,run=0,prev=null;
+      for(const d of Object.keys(history).filter(d=>d<=day).sort()){
+        const at=new Date(d+'T00:00:00Z').getTime();run=history[d].length?(prev===at-86400000?run+1:1):0;best=Math.max(best,run);prev=at;
       }
-      return hist;
-    }
-
-    function renderStats(remoteData) {
-      const history = getMergedHistory(remoteData);
-      const todayKey = getTodayKey();
-
-      // Calculate Streaks
-      let curStreak = remoteData?.stats?.current_streak;
-      let maxStreak = remoteData?.stats?.best_streak;
-      
-      if (!curStreak) {
-        curStreak = 7;
-        maxStreak = 7;
+      let cursor=new Date(day+'T00:00:00Z'),current=0;
+      if(!history[day]?.length)cursor.setUTCDate(cursor.getUTCDate()-1);
+      while(history[cursor.toISOString().slice(0,10)]?.length){current++;cursor.setUTCDate(cursor.getUTCDate()-1);}
+      text('kpi-current-streak',current+' дней');text('kpi-max-streak',best+' дней');document.querySelector('#kpi-max-streak + .kpi-sub').textContent='Рекорд по сохранённой истории';
+      document.querySelector('#kpi-current-streak + .kpi-sub').textContent=current?'Есть выполнения каждый день серии':'Серия пока не началась';
+      const todayCount=history[day]?.length||0,total=data.stats.total;
+      text('kpi-today-count',todayCount+' из '+total);text('kpi-today-status',todayCount>=total&&total?'🎉 Всё выполнено':'Осталось: '+Math.max(0,total-todayCount));
+      const month=day.slice(0,7);let done=0,possible=0;
+      for(const [d,ids] of Object.entries(history))if(d.startsWith(month)&&d<=day){done+=ids.length;possible+=data.stats.totals[d]||0;}
+      text('kpi-success-rate',possible?Math.round(100*done/possible)+'%':'—');
+      document.querySelector('#kpi-success-rate + .kpi-sub').textContent=done+' выполнений из '+possible+' возможных отметок';
+      document.getElementById('kpi-success-rate').previousElementSibling.textContent='📈 Отметки за текущий месяц';
+      const grid=document.getElementById('heatmap-grid');grid.replaceChildren();
+      const end=new Date(day+'T00:00:00Z');end.setUTCDate(end.getUTCDate()+6-(end.getUTCDay()+6)%7);
+      const tooltip=document.getElementById('tooltip');
+      for(let i=111;i>=0;i--){
+        const date=new Date(end);date.setUTCDate(date.getUTCDate()-i);const key=date.toISOString().slice(0,10),ids=history[key],cell=document.createElement('div');cell.className='heatmap-day';
+        const count=ids?.length||0,denominator=data.stats.totals[key]||0,ratio=count/Math.max(1,denominator);
+        if(ids&&count)cell.classList.add('lvl-'+(ratio>=1?5:ratio>=.75?4:ratio>=.5?3:2));
+        if(!ids||key>day)cell.style.opacity='.3';
+        const label=key+' · '+(!ids?'Нет данных':key>day?'Будущий день':count+' из '+denominator)+(ids?.length?'\n'+ids.map(id=>catalog[id]?catalog[id].icon+' '+catalog[id].title:id).join('\n'):'');
+        cell.title=label;cell.setAttribute('aria-label',label);
+        cell.onmouseenter=()=>{tooltip.textContent=label;tooltip.style.whiteSpace='pre-line';tooltip.style.display='block';const rect=cell.getBoundingClientRect();tooltip.style.left=Math.max(4,Math.min(rect.left,innerWidth-270))+'px';tooltip.style.top=Math.max(4,rect.top-100)+'px';};cell.onmouseleave=()=>tooltip.style.display='none';grid.append(cell);
       }
-
-      document.getElementById('kpi-current-streak').innerHTML = `${curStreak} <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span>`;
-      document.getElementById('kpi-max-streak').innerHTML = `${maxStreak} <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span>`;
-
-      // Today
-      const todayHabits = history[todayKey] || [];
-      const todayCount = todayHabits.length;
-      document.getElementById('kpi-today-count').innerHTML = `${todayCount} <span style="font-size:14px;font-weight:500;color:var(--text-sub);">из 8</span>`;
-      if (todayCount === 8) {
-        document.getElementById('kpi-today-status').innerText = '🔥 100% Все привычки закрыты!';
-        document.getElementById('kpi-today-status').style.color = 'var(--green)';
-      } else {
-        document.getElementById('kpi-today-status').innerText = `${8 - todayCount} осталось до идеала`;
-        document.getElementById('kpi-today-status').style.color = 'var(--text-sub)';
-      }
-
-      // Render Heatmap (16 weeks = 112 days)
-      const grid = document.getElementById('heatmap-grid');
-      grid.innerHTML = '';
-      const tooltip = document.getElementById('tooltip');
-
-      const totalDays = 112;
-      const endDate = new Date(getEffectiveNow());
-      // Adjust to end on Sunday
-      const endDayOfWeek = (endDate.getDay() + 6) % 7; // 0 (Mon) to 6 (Sun)
-      const daysToSunday = 6 - endDayOfWeek;
-      const calendarEnd = new Date(endDate);
-      calendarEnd.setDate(calendarEnd.getDate() + daysToSunday);
-
-      const daysList = [];
-      for (let i = totalDays - 1; i >= 0; i--) {
-        const cd = new Date(calendarEnd);
-        cd.setDate(cd.getDate() - i);
-        daysList.push(cd);
-      }
-
-      const monthsRu = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-      const weekdaysRu = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-
-      daysList.forEach(cd => {
-        const k = cd.getFullYear() + '-' + String(cd.getMonth() + 1).padStart(2, '0') + '-' + String(cd.getDate()).padStart(2, '0');
-        const doneList = history[k] || [];
-        const count = doneList.length;
-        const isFuture = cd > endDate;
-
-        const cell = document.createElement('div');
-        cell.className = 'heatmap-day';
-
-        if (!isFuture) {
-          if (count === 8) cell.classList.add('lvl-5');
-          else if (count >= 6) cell.classList.add('lvl-4');
-          else if (count >= 4) cell.classList.add('lvl-3');
-          else if (count >= 2) cell.classList.add('lvl-2');
-          else if (count >= 1) cell.classList.add('lvl-1');
-        }
-
-        cell.onmouseenter = (e) => {
-          if (isFuture) return;
-          const rect = cell.getBoundingClientRect();
-          const dayName = weekdaysRu[(cd.getDay() + 6) % 7];
-          const habitNames = doneList.map(hid => {
-            const h = HABIT_CONFIG.find(x => x.id === hid);
-            return h ? `${h.icon} ${h.title}` : hid;
-          }).join('<br>');
-
-          let grade = '💤 Пропуск';
-          if (count === 8) grade = '🔥 Идеально (8 из 8)';
-          else if (count >= 6) grade = '⚡ Отлично (' + count + ' из 8)';
-          else if (count >= 4) grade = '👍 Хорошо (' + count + ' из 8)';
-          else if (count > 0) grade = '🌱 Начало (' + count + ' из 8)';
-
-          tooltip.innerHTML = `
-            <strong>${cd.getDate()} ${monthsRu[cd.getMonth()]} (${dayName})</strong><br>
-            <span style="color:${count === 8 ? '#34d399' : '#fff'};font-weight:700;">${grade}</span>
-            ${count > 0 ? '<div style="margin-top:6px;border-top:1px solid rgba(255,255,255,0.15);padding-top:4px;">' + habitNames + '</div>' : ''}
-          `;
-          tooltip.style.display = 'block';
-          tooltip.style.left = (rect.left - 40) + 'px';
-          tooltip.style.top = (rect.top - 80) + 'px';
-        };
-
-        cell.onmouseleave = () => {
-          tooltip.style.display = 'none';
-        };
-
-        grid.appendChild(cell);
-      });
-
-      // Breakdown by Habit
-      const habitListEl = document.getElementById('habits-list');
-      habitListEl.innerHTML = '';
-
-      HABIT_CONFIG.forEach(h => {
-        let timesDone = 0;
-        let daysCounted = 0;
-        for (const [k, arr] of Object.entries(history)) {
-          if (Array.isArray(arr)) {
-            daysCounted++;
-            if (arr.includes(h.id)) timesDone++;
-          }
-        }
-        const pct = Math.min(100, Math.round((timesDone / Math.max(1, daysCounted)) * 100));
-
-        const row = document.createElement('div');
-        row.className = 'habit-stat-row';
-        row.innerHTML = `
-          <div class="stat-row-top">
-            <span class="stat-row-title"><span>${h.icon}</span> ${h.title}</span>
-            <span class="stat-pct">${pct}%</span>
-          </div>
-          <div class="stat-bar-track">
-            <div class="stat-bar-fill" style="width: ${pct}%;"></div>
-          </div>
-        `;
-        habitListEl.appendChild(row);
-      });
-    }
-
-    async function pullCloud() {
-      try {
-        const res = await fetch(SERVER_API + '/status?_=' + Date.now());
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.stats) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            renderStats(data);
-          }
-        }
-      } catch (e) {
-        console.error('Server sync error:', e);
+      const list=document.getElementById('habits-list');list.replaceChildren();
+      const start=new Date(day+'T00:00:00Z');start.setUTCDate(start.getUTCDate()-29);const from=start.toISOString().slice(0,10);
+      for(const h of Object.values(data.habits)){
+        const days=Object.keys(history).filter(d=>d>=from&&d<=day&&(d>=h.created||history[d].includes(h.id)));
+        const n=days.filter(d=>history[d].includes(h.id)).length;
+        const row=document.createElement('div');row.className='habit-stat-row';row.textContent=h.icon+' '+h.title+' · '+n+' выполнений / '+days.length+' дней с данными';list.append(row);
       }
     }
-
-    renderStats();
-    pullCloud();
-    setInterval(pullCloud, 10000);
+    // No invented baseline: unavailable data stays visibly unavailable.
+    for(const id of ['kpi-current-streak','kpi-max-streak','kpi-success-rate','kpi-today-count'])text(id,'—');
+    for(const el of document.querySelectorAll('.kpi-sub'))el.textContent='Ожидаем данные';
+    document.querySelector('.legend-scale').lastElementChild.textContent='Все привычки дня';
+    HabitsSync.subscribe(render);HabitsSync.start();
   </script>
 </body>
 </html>
