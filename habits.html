@@ -396,6 +396,7 @@
       </section>
     </div>
 
+    <details id="weekly-completed" style="margin:12px 0"><summary id="weekly-summary" style="cursor:pointer">Выполнено за неделю</summary><div class="grid" id="weekly-grid"></div></details>
     <footer class="footer-bar">
       <span>Ежедневные: <strong id="pct-label" style="color:var(--text-main);">0%</strong></span>
       <div class="track"><div class="fill" id="total-fill"></div></div>
@@ -408,14 +409,14 @@
   </main>
 
   <script src="habits-metrics.js?v=monthly-v1"></script>
-  <script src="habits-sync.js?v=3"></script>
+  <script src="habits-sync.js?v=phone-clock-v1"></script>
   <script>
     let showCompletedTray=false, current=null, busy=new Set();
     const status=document.createElement('div');status.id='sync-status';status.setAttribute('role','status');status.style.cssText='font-size:12px;padding:8px 0;color:var(--text-sub);line-height:1.4';
     document.querySelector('.heading').after(status);
     function toggleCompletedTray(){showCompletedTray=!showCompletedTray;render(current);}
     function makeCard(h){
-      const button=document.createElement('button');button.type='button';button.className='habit-card'+(h.done_today?' completed':'');button.disabled=busy.has(h.id)||!current.ready;
+      const button=document.createElement('button');button.type='button';button.className='habit-card'+(h.done_today?' completed':'');button.disabled=busy.has(h.id)||!current.ready||(h.type==='weekly'&&h.week_done>=h.goal&&!h.done_today);
       const icon=document.createElement('span');icon.className='habit-icon';icon.textContent=h.icon;
       const title=document.createElement('span');title.className='habit-title';title.textContent=h.title;title.title=h.title;
       const badge=document.createElement('span');badge.className='habit-badge';badge.textContent=h.done_today?'Сегодня ✓':h.week_done>=h.goal?'План недели ✓':'Отметить';
@@ -430,9 +431,12 @@
       if(value.data?.sync.error && !value.error && !value.pending) status.textContent='Сохранено на сервере · Notion временно недоступен';
       if(!value.data)return;
       const habits=Object.values(value.data.habits).sort((a,b)=>(a.type==='weekly')-(b.type==='weekly')),active=document.getElementById('active-grid'),completed=document.getElementById('completed-grid');active.replaceChildren();completed.replaceChildren();
-      for(const h of habits)(h.done_today?completed:active).append(makeCard(h));
-      const count=habits.filter(h=>h.done_today).length,total=habits.length;
-      if(count===total && total){const text=document.createElement('p');text.textContent='🎉 Все привычки на сегодня выполнены';active.append(text);}
+      const weekly=document.getElementById('weekly-grid');weekly.replaceChildren();
+      const closed=h=>h.type==='weekly'&&h.week_done>=h.goal;
+      for(const h of habits)(closed(h)?weekly:h.done_today?completed:active).append(makeCard(h));
+      const closedCount=habits.filter(closed).length;document.getElementById('weekly-completed').hidden=!closedCount;document.getElementById('weekly-summary').textContent='Выполнено за неделю · '+closedCount;
+      const count=habits.filter(h=>h.done_today&&!closed(h)).length,total=habits.length;
+      if(count+closedCount===total && total){const text=document.createElement('p');text.textContent='🎉 Все привычки на сегодня выполнены';active.append(text);}
       if(!total){const text=document.createElement('p');text.textContent='Добавь привычку в базу Notion — кнопка появится автоматически.';active.append(text);}
       document.getElementById('completed-section').style.display=showCompletedTray&&count?'block':'none';
       document.getElementById('toggle-completed-btn').style.display=count?'inline-flex':'none';
@@ -442,7 +446,7 @@
       document.getElementById('summary-label').textContent=daily.count+' из '+daily.total;
       document.getElementById('pct-label').textContent=(daily.total?Math.round(100*daily.count/daily.total):0)+'%';
       document.getElementById('total-fill').style.width=(daily.total?100*daily.count/daily.total:0)+'%';
-      document.getElementById('current-date').textContent=new Date(value.data.today+'T12:00:00Z').toLocaleDateString('ru-RU',{timeZone:'UTC',day:'numeric',month:'short'})+' · день с 03:00 МСК';
+      document.getElementById('current-date').textContent=new Date(value.data.today+'T12:00:00Z').toLocaleDateString('ru-RU',{timeZone:'UTC',day:'numeric',month:'short'})+' · день с 03:00';
     }
     for(const id of ['active-grid','completed-grid'])document.getElementById(id).addEventListener('wheel',e=>{if(e.deltaY && !e.deltaX)e.currentTarget.scrollLeft+=e.deltaY;},{passive:true});
     HabitsSync.subscribe(render);HabitsSync.start();

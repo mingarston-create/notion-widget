@@ -9,7 +9,38 @@
   let key = params.get('key') || '';
   try { if (key) localStorage.setItem('habits-access-v3', key); else key = localStorage.getItem('habits-access-v3') || ''; } catch (_) {}
   // The fragment is deliberately not part of any HTTP request or Referer.
-  function day() { return new Date().toISOString().slice(0, 10); }
+  function clock() { return snapshot?.clock || {timezone:'Europe/Moscow',cutoff_hour:3,revision:1,primary_device:null}; }
+  function effectiveDate(instant, timezone) {
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(instant).map(p=>[p.type,p.value]));
+    const d=new Date(parts.year+'-'+parts.month+'-'+parts.day+'T12:00:00Z');
+    if(Number(parts.hour)<3)d.setUTCDate(d.getUTCDate()-1);
+    return d.toISOString().slice(0,10);
+  }
+  function day() { return effectiveDate(new Date(),clock().timezone); }
+  function newer(data,old) { return !old || ((data.clock?.revision||1)>=(old.clock?.revision||1) && data.revision>=old.revision && (data.generated_at||0)>=(old.generated_at||0)); }
+  let deviceId='',settingClock=false;
+  const isPhone=/iPhone|Android.*Mobile/i.test(navigator.userAgent);
+  function detectedZone(){return Intl.DateTimeFormat().resolvedOptions().timeZone;}
+  async function updateClock(replace=false) {
+    if(settingClock)return;
+    settingClock=true;
+    try {
+      await request('/settings/timezone',{method:'POST',body:JSON.stringify({device_id:deviceId,device_kind:'phone',timezone:detectedZone(),expected_revision:clock().revision,replace_phone:replace})});
+      await saveSnapshot(await request('/status'));error='';broadcast();
+    } catch(e){error='Не удалось обновить часовой пояс. Пока действует '+clock().timezone;}
+    finally{settingClock=false;notify();}
+  }
+  function renderClock() {
+    let box=document.getElementById('tracker-clock');
+    if(!box){box=document.createElement('div');box.id='tracker-clock';box.style.cssText='font:12px system-ui;padding:8px 0;line-height:1.5;color:inherit';(document.querySelector('footer')||document.body).before(box);}
+    box.replaceChildren();
+    const c=clock();box.append('День с 03:00 · '+c.timezone+(c.primary_device?' · время основного телефона':' · ожидаем основного телефона'));
+    if(isPhone && deviceId && snapshot && (c.primary_device!==deviceId || c.timezone!==detectedZone())){
+      const button=document.createElement('button');button.type='button';button.style.cssText='margin:6px;padding:6px 10px;border-radius:8px;cursor:pointer';
+      button.textContent=c.primary_device && c.primary_device!==deviceId?'Сделать этот телефон основным':'Использовать '+detectedZone();button.disabled=settingClock;
+      button.onclick=()=>{if(confirm('Установить для всех устройств '+detectedZone()+'? История и сохранённые нажатия останутся на прежних датах.'))updateClock(true);};box.append(button);
+    }
+  }
   function openDB() {
     if (!dbPromise) dbPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, 1);
@@ -42,7 +73,7 @@
       return () => { outbox = q.result || []; snapshot = s.result || snapshot; };
     }).then(fn => { if (typeof fn === 'function') fn(); });
   }
-  function notify() { for (const callback of subscribers) callback(state()); }
+  function notify() { renderClock(); for (const callback of subscribers) callback(state()); }
   function state() {
     const result = snapshot ? JSON.parse(JSON.stringify(snapshot)) : null;
     if (result) {
@@ -78,19 +109,21 @@
     } finally { clearTimeout(timeout); }
   }
   async function saveSnapshot(data) {
-    await transaction(['meta'], 'readwrite', tx => {const meta=tx.objectStore('meta'),r=meta.get('snapshot');r.onsuccess=()=>{const old=r.result;if(!old || (data.revision>=old.revision && data.today>=old.today)){meta.put(data,'snapshot');snapshot=data;}else snapshot=old;};});
+    await transaction(['meta'], 'readwrite', tx => {const meta=tx.objectStore('meta'),r=meta.get('snapshot');r.onsuccess=()=>{const old=r.result;if(newer(data,old)){meta.put(data,'snapshot');snapshot=data;}else snapshot=old;};});
   }
   async function refresh() {
     if (!key) { error='Открой виджет из Notion: требуется ключ доступа.';notify();return; }
     try {
       const data=await request('/status');
       if (!data.sync.initialized) throw new Error('Подготавливаем историю. Попробуем снова автоматически.');
-      await saveSnapshot(data); remoteError='';error='';await readLocal();notify();
+      await saveSnapshot(data); if(isPhone && deviceId && !clock().primary_device)await updateClock(); remoteError='';error='';await readLocal();notify();
     } catch (e) { remoteError=e.status===401 ? 'Ключ доступа не принят. Открой виджет из Notion.' : 'Нет связи с сервером. Нажатия сохраняются на этом устройстве.';notify(); }
   }
-  async function setHabit(id, done, date = day()) {
+  async function setHabit(id, done, date) {
     if (!snapshot || storageError) throw new Error('Сначала нужно загрузить привычки и открыть локальное хранилище.');
-    const op = {operation_id:crypto.randomUUID(),id,date,done,created_at:new Date().toISOString()};
+    const instant=new Date(), captured=clock();
+    const op = {operation_id:crypto.randomUUID(),id,date:date || effectiveDate(instant,captured.timezone),done,created_at:instant.toISOString()};
+    if(!date)Object.assign(op,{timezone:captured.timezone,clock_revision:captured.revision,cutoff_hour:3});
     try {
       await transaction(['meta','outbox'],'readwrite',tx => {
         const meta=tx.objectStore('meta'), request=meta.get('sequence');
@@ -111,7 +144,7 @@
         // Refresh BEFORE deleting the outbox item: otherwise a stale cached
         // snapshot can briefly erase a just accepted click after reload.
         const data=await request('/status');
-        await transaction(['outbox','meta'],'readwrite',tx=>{const meta=tx.objectStore('meta'),r=meta.get('snapshot');r.onsuccess=()=>{const old=r.result;if(!old || (data.revision>=old.revision && data.today>=old.today)){meta.put(data,'snapshot');snapshot=data;}else snapshot=old;};tx.objectStore('outbox').delete(op.operation_id);});error='';remoteError='';
+        await transaction(['outbox','meta'],'readwrite',tx=>{const meta=tx.objectStore('meta'),r=meta.get('snapshot');r.onsuccess=()=>{const old=r.result;if(newer(data,old)){meta.put(data,'snapshot');snapshot=data;}else snapshot=old;};tx.objectStore('outbox').delete(op.operation_id);});error='';remoteError='';
       } catch(e) {
         if(e.status===400) {
           op.blocked=e.message;
@@ -148,12 +181,12 @@
   if(channel)channel.onmessage=async()=>{await readLocal();notify();};
   async function tick(){await flush();await refresh();}
   async function start() {
-    try {await readLocal();notify();} catch(e) {storageError='Браузер запретил локальное хранение. Отметки не принимаются.';notify();return;}
+    try {await transaction(['meta'],'readwrite',tx=>{const m=tx.objectStore('meta'),r=m.get('device_id');r.onsuccess=()=>{deviceId=r.result||crypto.randomUUID();m.put(deviceId,'device_id');};});await readLocal();notify();} catch(e) {storageError='Браузер запретил локальное хранение. Отметки не принимаются.';notify();return;}
     if (navigator.storage?.persist) navigator.storage.persist().catch(()=>{});
     await tick();timer=setInterval(tick,10000);
   }
   root.addEventListener('online',tick);
   root.addEventListener('focus',tick);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick();});
-  root.HabitsSync={start,subscribe(fn){subscribers.add(fn);fn(state());return ()=>subscribers.delete(fn);},setHabit,refresh:tick,state,day};
+  root.HabitsSync={start,subscribe(fn){subscribers.add(fn);fn(state());return ()=>subscribers.delete(fn);},setHabit,refresh:tick,state,day,effectiveDate};
 })(window);
