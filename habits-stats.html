@@ -334,12 +334,12 @@
     <section class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label">🔥 Текущий стрик</div>
-        <div class="kpi-val" id="kpi-current-streak">14 <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span></div>
+        <div class="kpi-val" id="kpi-current-streak">7 <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span></div>
         <div class="kpi-sub" style="color:var(--green);">Серия активна без пропусков</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">🏆 Рекордный стрик</div>
-        <div class="kpi-val" id="kpi-max-streak">14 <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span></div>
+        <div class="kpi-val" id="kpi-max-streak">7 <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span></div>
         <div class="kpi-sub">Личный рекорд</div>
       </div>
       <div class="kpi-card">
@@ -417,22 +417,15 @@
     const STORAGE_KEY = 'notion_habits_v2';
     const SERVER_API = 'https://153.76.192.118:8443/api/habits';
 
-    // Baseline historical records
+    // Baseline historical records (starting from November 1st, 2026)
     const BASELINE_HISTORY = {
-      '2026-10-26': ['english', 'exercise', 'shower', 'pushups', 'squats', 'meditation'],
-      '2026-10-27': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard'],
-      '2026-10-28': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool'],
-      '2026-10-29': ['english', 'exercise', 'shower', 'pushups', 'squats', 'meditation'],
-      '2026-10-30': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard'],
-      '2026-10-31': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
       '2026-11-01': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
       '2026-11-02': ['english', 'exercise', 'shower', 'pushups', 'squats', 'meditation'],
       '2026-11-03': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard'],
       '2026-11-04': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
       '2026-11-05': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard'],
       '2026-11-06': ['english', 'exercise', 'shower', 'pushups', 'squats', 'pool', 'mouthguard', 'meditation'],
-      '2026-11-07': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard'],
-      '2026-11-08': ['english', 'exercise', 'shower', 'pushups', 'squats', 'meditation']
+      '2026-11-07': ['english', 'exercise', 'shower', 'pushups', 'squats', 'mouthguard']
     };
 
     function getEffectiveNow() {
@@ -471,8 +464,8 @@
       let maxStreak = remoteData?.stats?.best_streak;
       
       if (!curStreak) {
-        curStreak = 14;
-        maxStreak = 14;
+        curStreak = 7;
+        maxStreak = 7;
       }
 
       document.getElementById('kpi-current-streak').innerHTML = `${curStreak} <span style="font-size:14px;font-weight:500;color:var(--text-sub);">дней</span>`;
