@@ -12,7 +12,7 @@ GitHub Pages отдаёт интерфейс по HTTPS. Сервис из ка�
 
 ## Подключение сервиса данных
 
-В [`widget-config.js`](widget-config.js) указывается один HTTPS-адрес сервиса. При первом запуске задайте постоянное доменное имя. При переносе на новый IP обновите только DNS-запись домена. Ссылки в Notion и программный код продолжат работать с тем же адресом.
+В [`widget-config.js`](widget-config.js) задан постоянный адрес `https://notion-widgets-api.mingarston.workers.dev`. Cloudflare Worker передаёт запросы к закрытому VPS через Workers VPC и исходящий Cloudflare Tunnel. При смене IP восстановите сервис, SQLite и подключение того же туннеля к Cloudflare. Адрес API и ссылки внутри Notion сохраняются. Исходник Worker находится в [`_server/cloudflare-worker.js`](_server/cloudflare-worker.js).
 
 Сервис слушает `127.0.0.1:8080`. HTTPS-вход должен передавать заголовок `Authorization` и запросы `OPTIONS`, `GET` и `POST` к `/api/`. Для страниц разрешён источник `https://mingarston-create.github.io`.
 

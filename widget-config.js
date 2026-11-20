@@ -1,7 +1,7 @@
 /* Specify a stable HTTPS hostname when the data service is ready. */
 (function (root) {
   'use strict';
-  const apiOrigin = '';
+  const apiOrigin = 'https://notion-widgets-api.mingarston.workers.dev';
 
   root.WidgetConfig = Object.freeze({
     apiUrl(path) {
