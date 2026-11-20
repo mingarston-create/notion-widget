@@ -18,14 +18,29 @@ export default {
     if (origin && origin !== pagesOrigin) {
       return new Response('Forbidden', { status: 403 });
     }
-    if (request.method !== method && request.method !== 'OPTIONS') {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': pagesOrigin,
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, X-Widget-Key, Authorization',
+          'Cache-Control': 'no-store',
+          'Vary': 'Origin',
+        },
+      });
+    }
+    if (request.method !== method) {
       return new Response('Method not allowed', { status: 405 });
     }
     const headers = new Headers();
-    for (const name of ['Origin', 'Authorization', 'Content-Type', 'Access-Control-Request-Method', 'Access-Control-Request-Headers']) {
+    for (const name of ['Origin', 'Authorization', 'Content-Type']) {
       const value = request.headers.get(name);
       if (value) headers.set(name, value);
     }
+
+    const widgetKey = request.headers.get('X-Widget-Key');
+    if (widgetKey) headers.set('Authorization', 'Bearer ' + widgetKey);
 
     try {
       const target = new URL(url.pathname + url.search, 'http://127.0.0.1:8080');

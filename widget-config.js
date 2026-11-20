@@ -14,6 +14,9 @@
       }
       return origin.origin + path;
     },
+    authHeaders(key) {
+      return {'X-Widget-Key': key};
+    },
     hasApi: Boolean(apiOrigin)
   });
 })(window);

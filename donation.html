@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>Почётный донор</title>
-<script src="widget-config.js?v=tunnel-v1"></script>
+<script src="widget-config.js?v=tunnel-v2"></script>
 <body>
 <div id="donation-flask">
   <section class="donor-panel" aria-label="Прогресс донаций">
@@ -592,7 +592,7 @@ html, body { margin: 0; background: transparent; }
       const response = await fetch(url, {
         cache: 'no-store',
         signal: AbortSignal.timeout(8000),
-        headers: {Authorization: 'Bearer ' + accessKey}
+        headers: WidgetConfig.authHeaders(accessKey)
       });
       if (!response.ok) throw new Error('Donation snapshot unavailable');
       applySnapshot(await response.json());

@@ -143,7 +143,7 @@
   async function request(path, options = {}) {
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 12000);
     try {
-      const response = await fetch(root.WidgetConfig.apiUrl('/api/habits'+path), {...options,cache:'no-store',signal:controller.signal,headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json',...options.headers}});
+      const response = await fetch(root.WidgetConfig.apiUrl('/api/habits'+path), {...options,cache:'no-store',signal:controller.signal,headers:{...root.WidgetConfig.authHeaders(key),'Content-Type':'application/json',...options.headers}});
       const value = await response.json().catch(() => ({}));
       if (!response.ok) { const e = new Error(value.error || 'Сервер временно недоступен'); e.status = response.status; throw e; }
       return value;
