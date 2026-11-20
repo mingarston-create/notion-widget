@@ -1,0 +1,18 @@
+[Unit]
+Description=Refresh Notion donation totals
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=notion-habits
+ExecStart=/usr/bin/python3 /opt/notion-widgets/donation/sync.py
+LoadCredential=notion-config:/etc/notion-habits/config.json
+StateDirectory=notion-donation
+StateDirectoryMode=0700
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+TimeoutStartSec=75

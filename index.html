@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Прогресс</title><style>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Прогресс по задачам</title><style>
     :root {
       --bg: #ffffff;
       --card-bg: #ffffff;
@@ -132,7 +132,8 @@ h1{font-size:14px;letter-spacing:.09em;text-transform:uppercase;color:var(--text
 <div class="weather-main"><span class="weather-icon" id="w-icon">⛅</span><div class="weather-temp-wrap"><span class="weather-temp" id="w-temp">—°C</span><span class="weather-meta" id="w-desc">Москва · загрузка</span></div></div>
 <div class="year-pod"><div class="year-top"><span class="year-title" id="year-title">Год</span><span class="year-left-chip" id="year-left">— дн. ост.</span></div><div class="year-bar-row"><span class="year-pct-big" id="year-pct">—%</span><div class="progress-track"><div class="progress-fill" id="year-fill"></div></div></div></div>
 </footer></main>
-<script src="tasks-sync.js?v=live-v1"></script>
+<script src="widget-config.js?v=widgets-v2"></script>
+  <script src="tasks-sync.js?v=widgets-v2"></script>
 <script>
 let metrics={inbox:0,urgent:0,active:0,pool:0,done:0,todayTotal:0,pct:0},hasMetrics=false;
 function renderMetrics(value){

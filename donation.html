@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Почётный донор</title>
+<script src="widget-config.js?v=widgets-v2"></script>
+<body>
+<div id="donation-flask">
+  <section class="donor-panel" aria-label="Прогресс донаций">
+    <button class="donor-stage cursor-interaction" type="button" aria-label="Качнуть колбу" data-tooltip="Качнуть колбу">
+      <canvas aria-hidden="true"></canvas>
+    </button>
+    <div class="donor-summary" aria-live="polite" aria-atomic="true">
+      <div class="donor-total"><strong data-count>—</strong><span class="donor-denominator"> / 40</span></div>
+      <div class="donor-breakdown" aria-label="Фактические донации">
+        <span>Кровь <span class="donor-dot" aria-hidden="true"></span> <b data-blood>—</b></span>
+        <span>Плазма <span class="donor-dot plasma" aria-hidden="true"></span> <b data-plasma>—</b></span>
+      </div>
+      <span data-remaining>Загрузка…</span>
+    </div>
+
+    <div class="donor-next">
+      <div class="donor-next-options" role="group" aria-label="Сроки донаций" aria-live="polite" aria-atomic="true">
+        <div class="donor-option"><span>Кровь</span><strong data-blood-days>—</strong></div>
+        <div class="donor-option"><span>Плазма</span><strong data-plasma-days>—</strong></div>
+      </div>
+      <p class="donor-percent"><span data-percent>—</span><span class="donor-percent-unit">%</span></p>
+    </div>
+    <p class="donor-sync" role="status" hidden></p>
+  </section>
+</div>
+
+<style>
+html, body { margin: 0; background: transparent; }
+#donation-flask {
+  color-scheme: light dark;
+  container-type: inline-size;
+  width: 100%;
+  font-family: Inter, system-ui, sans-serif;
+}
+#donation-flask * { box-sizing: border-box; }
+#donation-flask .donor-panel {
+  --paper: light-dark(#f9f8f7, #2a2a29);
+  --ink: light-dark(#2c2c2b, #f2f1f0);
+  --quiet: light-dark(#686563, #bfbab6);
+  --line: light-dark(#e5e2df, #454342);
+  --red: light-dark(#d21a29, #ff6a62);
+  --readout-inset: clamp(3px, .7cqw, 8px);
+  width: 100%;
+  padding: clamp(10px, 1.5cqw, 15px) clamp(10px, 2.4cqw, 20px);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  overflow: hidden;
+}
+#donation-flask p { margin: 0; }
+#donation-flask .donor-percent {
+  color: var(--red);
+  font: 580 clamp(22px, 4.4cqw, 37px)/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.065em;
+  white-space: nowrap;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+#donation-flask .donor-percent-unit {
+  font-size: .48em;
+  margin-left: .21em;
+  letter-spacing: 0;
+}
+#donation-flask .donor-stage {
+  display: block;
+  width: 100%;
+  height: clamp(104px, 14cqw, 117px);
+  appearance: none;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  touch-action: pan-y;
+  cursor: pointer;
+}
+#donation-flask canvas { display: block; width: 100%; height: 100%; }
+#donation-flask .donor-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  margin-inline: var(--readout-inset);
+  padding: 1px 0 10px;
+  font-variant-numeric: tabular-nums;
+}
+#donation-flask [data-count] {
+  font-size: clamp(21px, 4.2cqw, 30px);
+  font-weight: 600;
+  letter-spacing: -.055em;
+  line-height: 1;
+}
+#donation-flask .donor-denominator { color: var(--quiet); font-size: clamp(12px, 2cqw, 16px); }
+#donation-flask .donor-total {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  color: var(--ink);
+  text-align: center;
+  white-space: nowrap;
+}
+#donation-flask [data-remaining] {
+  grid-column: 3;
+  grid-row: 1;
+  text-align: right;
+  font-size: clamp(11px, 1.9cqw, 14px);
+  line-height: 1.15;
+  font-weight: 600;
+}
+#donation-flask .donor-next {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 5px 8px;
+  margin-inline: var(--readout-inset);
+  padding-block: 6px;
+  border-block: 1px solid var(--line);
+  color: var(--quiet);
+  font-size: 13px;
+}
+#donation-flask .donor-total,
+#donation-flask .donor-next-options {
+  width: 100%;
+  max-width: 264px;
+}
+#donation-flask .donor-next-options {
+  display: grid;
+  grid-column: 1;
+  grid-row: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+#donation-flask .donor-option {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 7px;
+  background: light-dark(#efedeb, #353433);
+  color: var(--ink);
+  font-size: 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+#donation-flask .donor-option.is-ready {
+  background: light-dark(#e7efe9, #303f36);
+}
+#donation-flask .donor-option strong {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+#donation-flask .donor-breakdown {
+  display: flex;
+  grid-column: 2;
+  grid-row: 1;
+  gap: 5px clamp(7px, 2cqw, 16px);
+  justify-content: center;
+  color: var(--quiet);
+  font-size: clamp(11px, 1.9cqw, 14px);
+}
+#donation-flask .donor-breakdown > span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+}
+#donation-flask .donor-breakdown b { color: var(--ink); }
+#donation-flask .donor-dot {
+  width: 7px;
+  height: 7px;
+  align-self: center;
+  border-radius: 50%;
+  background: light-dark(#a32642, #fc879c);
+}
+#donation-flask .donor-dot.plasma { background: light-dark(#aa6c2b, #eaba72); }
+#donation-flask .donor-sync {
+  font-size: 12px;
+  color: var(--quiet);
+  padding-top: 6px;
+}
+@container (max-width: 520px) {
+  #donation-flask .donor-summary {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+  #donation-flask .donor-breakdown {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-wrap: wrap;
+  }
+  #donation-flask [data-remaining] { grid-column: 2; }
+}
+@container (max-width: 480px) {
+  #donation-flask .donor-stage {
+    width: calc(100% + 12px);
+    margin-inline: -6px;
+  }
+  #donation-flask .donor-next-options {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+@container (max-width: 260px) {
+  #donation-flask .donor-option, #donation-flask .donor-option strong { font-size: 11px; }
+  #donation-flask .donor-next-options { grid-row: 1; }
+  #donation-flask .donor-percent { grid-row: 2; }
+}
+@container (max-width: 240px) {
+  #donation-flask .donor-percent { font-size: 19px; }
+  #donation-flask .donor-stage { height: 94px; }
+  #donation-flask .donor-next { font-size: 11px; }
+}
+@container (max-width: 225px) {
+  #donation-flask .donor-next-options { grid-template-columns: 1fr; }
+}
+@container (max-width: 150px) {
+  #donation-flask .donor-stage { height: 80px; }
+  #donation-flask .donor-next { gap: 5px; }
+}
+</style>
+
+<script>
+(() => {
+  const root = document.getElementById('donation-flask');
+  const panel = root.querySelector('.donor-panel');
+  const stage = root.querySelector('.donor-stage');
+  const canvas = stage.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  const countLabel = root.querySelector('[data-count]');
+  const percentLabel = root.querySelector('[data-percent]');
+  const remainingLabel = root.querySelector('[data-remaining]');
+  const countdown = root.querySelector('.donor-next');
+  const bloodDaysLabel = countdown.querySelector('[data-blood-days]');
+  const plasmaDaysLabel = countdown.querySelector('[data-plasma-days]');
+  const bloodLabel = root.querySelector('[data-blood]');
+  const plasmaLabel = root.querySelector('[data-plasma]');
+  const syncLabel = root.querySelector('.donor-sync');
+  const goal = 40;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const scheme = window.matchMedia('(prefers-color-scheme: dark)');
+  const number = new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 1});
+  const plural = new Intl.PluralRules('ru-RU');
+  const units = {one: 'донация', few: 'донации', many: 'донаций', other: 'донации'};
+  const dayUnits = {one: 'день', few: 'дня', many: 'дней', other: 'дня'};
+  const calendar = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Amsterdam', year: 'numeric', month: '2-digit', day: '2-digit'
+  });
+  const dayMs = 86400000;
+  // Annex 7 of Orders 1166n and 215n. Index by the previous donation type.
+  const intervals = {blood: {blood: 60, plasma: 30}, plasma: {blood: 14, plasma: 14}};
+  const pollMs = 60000;
+  const maxSnapshotAge = 10 * pollMs;
+  let lastDonationDay = null;
+  let lastDonationKind = null;
+  let lastSync = null;
+  let refreshing = false;
+
+  let target = 0;
+  let level = target;
+  let strength = 0;
+  let direction = 1;
+  let lastX;
+  let frame = 0;
+  let lastTime;
+  let phase = 0;
+  let drift = 0;
+  let visible = true;
+  let width = 0;
+  let height = 0;
+  let pixelRatio = 1;
+  let dark = false;
+
+  function gradient(x1, y1, x2, y2, stops) {
+    const paint = ctx.createLinearGradient(x1, y1, x2, y2);
+    for (const [at, color] of stops) paint.addColorStop(at, color);
+    return paint;
+  }
+
+  function capsule(x, y, w, h) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, h / 2);
+  }
+
+  function paint() {
+    if (!ctx || width < 40 || height < 40) return;
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    const left = width < 460 ? 2 : 5;
+    const w = width - left * 2;
+    const h = Math.min(height * .54, 25 + w * .12);
+    const top = (height - h) * .29;
+    const bottom = top + h;
+    const wall = Math.max(3, h * .071);
+
+    // Contact shadow and a reflected streak beneath the glass.
+    ctx.save();
+    ctx.translate(width / 2, bottom + h * .055);
+    ctx.scale(w * .50, h * .20);
+    const shadow = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+    shadow.addColorStop(0, dark ? '#080306ad' : '#51212946');
+    shadow.addColorStop(1, '#51212900');
+    ctx.fillStyle = shadow;
+    ctx.fillRect(-1, -1, 2, 2);
+    ctx.restore();
+
+    capsule(left, top, w, h);
+    ctx.fillStyle = gradient(0, top, 0, bottom, dark ? [
+      [0, '#8c7882'], [.045, '#d5bfc7'], [.11, '#59444d'],
+      [.31, '#3d2d33'], [.66, '#332229'], [.88, '#472e37'],
+      [.96, '#95737d'], [1, '#3b2830']
+    ] : [
+      [0, '#a68e8b'], [.05, '#eadad6'], [.10, '#fffaf7'],
+      [.28, '#f1e7e2'], [.67, '#dfd2cd'], [.85, '#eee1db'],
+      [.95, '#fdf5ee'], [1, '#aa8b88']
+    ]);
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = dark ? '#bca6ae75' : '#8d6d654d';
+    ctx.stroke();
+
+    capsule(left + wall, top + wall, w - 2 * wall, h - 2 * wall);
+    ctx.save();
+    ctx.clip();
+
+    const span = w - 2 * wall;
+    const front = left + wall + span * level;
+    const ripple = strength * Math.sin(phase) * h;
+    const sway = Math.sin(drift * 1.55);
+    const side = direction * ripple + sway * h * .07;
+    const full = level >= 1;
+    const crest = top + wall + h * (full ? 0 : .13);
+    const floor = bottom - wall + 1;
+
+    const surface = new Path2D();
+    ctx.save();
+    if (!full) {
+      const start = left - 2;
+      const end = left + w + 2;
+      const rippleA = Math.sin(drift * 2.6 + .7) * h * .115;
+      const rippleB = Math.sin(drift * 2.6 + 2.6) * h * .105;
+      surface.moveTo(start, crest - side * .55);
+      surface.bezierCurveTo(start + w * .17, crest + rippleA + ripple * .48,
+        start + w * .35, crest + rippleA - side * .45, start + w * .50, crest);
+      surface.bezierCurveTo(start + w * .68, crest - rippleB + side * .4,
+        end - w * .14, crest - rippleB - ripple * .3, end, crest + side * .50);
+      const liquid = new Path2D(surface);
+      liquid.lineTo(end, floor + 1);
+      liquid.lineTo(start, floor + 1);
+      liquid.closePath();
+      ctx.clip(liquid);
+      ctx.fillStyle = gradient(0, crest, 0, floor, [
+        [0, '#ffffff82'], [.09, '#ffffff47'], [.32, '#ffffff14'],
+        [.59, '#ffffff00'], [.86, '#ffffff17'], [1, '#ffffff58']
+      ]);
+      ctx.fillRect(left, top, w, h);
+    }
+
+    if (level > .001) {
+      ctx.save();
+      const color = gradient(0, crest - h * .09, 0, floor, [
+        [0, '#ff6a62'], [.14, '#f44343'], [.36, '#e62530'], [.64, '#d21a29'],
+        [.85, '#c31525'], [1, '#a90f23']
+      ]);
+      if (!full) {
+        const limit = span * Math.min(level, 1 - level) * .45;
+        const shift = Math.max(-limit, Math.min(limit, side));
+        const seam = new Path2D();
+        seam.moveTo(front + shift * .85, top - 1);
+        seam.bezierCurveTo(front + shift * 1.3, crest + h * .12,
+          front - shift * .75, floor - h * .23, front - shift * .36, floor + 1);
+        // Soften the optical edge across a few pixels without tinting the water.
+        ctx.strokeStyle = color;
+        for (const [size, opacity] of [[.085, .12], [.055, .22], [.029, .38]]) {
+          ctx.lineWidth = Math.max(1, h * size);
+          ctx.globalAlpha = opacity;
+          ctx.stroke(seam);
+        }
+        ctx.globalAlpha = 1;
+        const blood = new Path2D(seam);
+        blood.lineTo(left - 2, floor + 1);
+        blood.lineTo(left - 2, top - 1);
+        blood.closePath();
+        ctx.clip(blood);
+      }
+      ctx.fillStyle = color;
+      ctx.fillRect(left, top, w, h);
+
+      const lightX = front - h * (.66 + sway * .24);
+      const bounce = ctx.createRadialGradient(lightX, crest + h * .22, 0,
+        lightX, crest + h * .22, h * 1.65);
+      bounce.addColorStop(0, '#ff796a8c');
+      bounce.addColorStop(.40, '#ff524345');
+      bounce.addColorStop(1, '#ff524300');
+      ctx.fillStyle = bounce;
+      ctx.fillRect(left, top - 2, w, h + 4);
+      ctx.restore();
+    }
+
+    const reflectionX = left + w * (.64 + Math.sin(drift * 1.25) * .16) + side * 1.5;
+    ctx.save();
+    ctx.translate(reflectionX, floor - h * .025 + side * .07);
+    ctx.scale(w * .43, h * .15);
+    const caustic = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+    caustic.addColorStop(0, '#fff9e9bd');
+    caustic.addColorStop(.48, '#fff5ed52');
+    caustic.addColorStop(1, '#fff5ed00');
+    ctx.fillStyle = caustic;
+    ctx.fillRect(-1, -1, 2, 2);
+    ctx.restore();
+
+    if (!full) {
+      // Reflections track the same wave across both colors.
+      ctx.save();
+      ctx.translate(0, h * .085);
+      ctx.strokeStyle = gradient(reflectionX - w * .43, 0, reflectionX + w * .43, 0, [
+        [0, '#ffffff18'], [.23, '#ffffff63'], [.58, '#ffffffe8'], [1, '#ffffff13']
+      ]);
+      ctx.lineWidth = Math.max(1.4, h * (.036 + strength * .032));
+      ctx.stroke(surface);
+      ctx.restore();
+    }
+    ctx.restore();
+
+    if (!full) {
+      // A neutral rim makes the common meniscus visible over clear water.
+      ctx.strokeStyle = dark ? '#17151796' : '#6f575357';
+      ctx.lineWidth = Math.max(3, h * .061);
+      ctx.stroke(surface);
+      ctx.strokeStyle = '#fffffff0';
+      ctx.lineWidth = Math.max(1.4, h * .027);
+      ctx.stroke(surface);
+    }
+
+    // Specular bands remain in front of both the air and the liquid.
+    ctx.fillStyle = gradient(0, top, 0, bottom, [
+      [0, '#fff0ec00'], [.10, '#fff7f000'], [.17, '#fff7f0c9'], [.205, '#fff7f03a'],
+      [.28, '#fff7f000'], [.75, '#fff7f000'], [.87, '#ffddd835'], [.91, '#fff7ee78'], [1, '#fff7ee00']
+    ]);
+    ctx.fillRect(left, top, w, h);
+    ctx.restore();
+
+    capsule(left + wall * .59, top + wall * .59, w - wall * 1.18, h - wall * 1.18);
+    ctx.strokeStyle = dark ? '#fff3ec59' : '#fffffff4';
+    ctx.lineWidth = Math.max(1, h * .021);
+    ctx.stroke();
+
+    // Engraved scale gives the horizontal fill an explicit endpoint.
+    const markY = bottom + Math.min(15, h * .19);
+    const markLeft = left + wall;
+    const markWidth = w - 2 * wall;
+    for (let mark = 0; mark <= goal; mark++) {
+      if (w < 340 && mark % 2 && mark % 5) continue;
+      const x = markLeft + (mark / goal) * markWidth;
+      const big = mark % 10 === 0;
+      ctx.fillStyle = dark ? '#c8a4ad' : '#997e79';
+      ctx.globalAlpha = big ? .77 : .39;
+      ctx.fillRect(x - .5, markY, 1, big ? 7 : 3);
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = dark ? '#c9b5ba' : '#765e5b';
+    ctx.font = '11px system-ui, sans-serif';
+    ctx.textBaseline = 'top';
+    const labels = w < 145 ? [0, 20, 40] : [0, 10, 20, 30, 40];
+    for (const mark of labels) {
+      ctx.textAlign = mark === 0 ? 'left' : mark === goal ? 'right' : 'center';
+      ctx.fillText(mark, markLeft + (mark / goal) * markWidth, markY + 10);
+    }
+  }
+
+  function animate(time) {
+    frame = 0;
+    const dt = lastTime === undefined ? 1 / 60 : Math.min(.05, (time - lastTime) / 1000);
+    lastTime = time;
+    level += (target - level) * (1 - Math.exp(-dt * 7));
+    strength *= Math.exp(-dt * 2.5);
+    phase += dt * 10;
+    drift += dt;
+    const changingLevel = Math.abs(target - level) > .0002;
+    if (!changingLevel) level = target;
+    paint();
+    frame = requestAnimationFrame(animate);
+  }
+
+  function wake() {
+    if (!visible || document.hidden || reduced.matches || !ctx) {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      lastTime = undefined;
+      level = target;
+      strength = 0;
+      paint();
+    } else if (!frame) {
+      frame = requestAnimationFrame(animate);
+    }
+  }
+
+  function sway(impulse, side) {
+    strength = Math.max(strength, impulse);
+    direction = side;
+    wake();
+  }
+
+  function resize() {
+    if (!ctx) return;
+    const size = stage.getBoundingClientRect();
+    width = size.width;
+    height = size.height;
+    pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(width * pixelRatio);
+    canvas.height = Math.round(height * pixelRatio);
+    paint();
+  }
+
+  function setCountdown(node, days) {
+    const label = days === null ? '—' : days === 0 ? 'Можно сдавать' :
+      days + ' ' + dayUnits[plural.select(days)];
+    if (node.textContent === label) return;
+    node.textContent = label;
+    node.closest('.donor-option').classList.toggle('is-ready', days === 0);
+    node.title = days === 0 ? 'По календарному интервалу. Допуск подтверждает врач службы крови.' : '';
+  }
+
+  function updateCountdown(now = new Date()) {
+    if (lastDonationKind === null || now.getTime() - lastSync > maxSnapshotAge) {
+      setCountdown(bloodDaysLabel, null);
+      setCountdown(plasmaDaysLabel, null);
+      return;
+    }
+
+    const parts = Object.fromEntries(calendar.formatToParts(now).map(({type, value}) => [type, value]));
+    const today = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
+    const elapsed = (today - lastDonationDay) / dayMs;
+    const schedule = intervals[lastDonationKind];
+    setCountdown(bloodDaysLabel, Math.max(0, schedule.blood - elapsed));
+    setCountdown(plasmaDaysLabel, Math.max(0, schedule.plasma - elapsed));
+  }
+
+  function applySnapshot(snapshot) {
+    const {blood, plasma, lastDonation, lastDonationKind: kind, syncedAt} = snapshot;
+    const lastDate = lastDonation === null ? null : Date.parse(lastDonation);
+    const syncTime = Date.parse(syncedAt);
+
+    if (![blood, plasma].every(value => Number.isSafeInteger(value) && value >= 0) ||
+      (lastDate !== null && !Number.isFinite(lastDate)) || !Number.isFinite(syncTime)) {
+      throw new Error('Invalid donation snapshot');
+    }
+    if (lastSync === syncTime) return;
+
+    const total = blood + plasma;
+    const remaining = Math.max(0, goal - total);
+    lastSync = syncTime;
+    countLabel.textContent = total;
+    percentLabel.textContent = number.format(Math.min(100, 100 * total / goal));
+    bloodLabel.textContent = blood;
+    plasmaLabel.textContent = plasma;
+    remainingLabel.textContent = remaining
+      ? `${plural.select(remaining) === 'one' ? 'Осталась' : 'Осталось'} ${remaining} ${units[plural.select(remaining)]}`
+      : 'Цель достигнута';
+
+    lastDonationDay = lastDate;
+    lastDonationKind = lastDate !== null && Object.hasOwn(intervals, kind) ? kind : null;
+    updateCountdown();
+
+    const newTarget = Math.min(1, total / goal);
+    if (target !== newTarget) {
+      target = newTarget;
+      sway(.19, target >= level ? 1 : -1);
+    }
+  }
+
+  let accessKey = new URLSearchParams(location.hash.slice(1)).get('key') || '';
+  try {
+    if (accessKey) localStorage.setItem('donation-access-v1', accessKey);
+    else accessKey = localStorage.getItem('donation-access-v1') || '';
+  } catch {}
+
+  async function refresh() {
+    if (refreshing || document.hidden) return;
+    refreshing = true;
+    try {
+      const url = WidgetConfig.apiUrl('/api/donation/status');
+      if (!accessKey) throw new Error('Требуется ключ доступа');
+      const response = await fetch(url, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(8000),
+        headers: {Authorization: 'Bearer ' + accessKey}
+      });
+      if (!response.ok) throw new Error('Donation snapshot unavailable');
+      applySnapshot(await response.json());
+      const stale = Date.now() - lastSync > maxSnapshotAge;
+      syncLabel.textContent = stale ? 'Показаны последние сохранённые данные Notion' : '';
+      syncLabel.hidden = !stale;
+    } catch {
+      if (lastSync === null) remainingLabel.textContent = '—';
+      syncLabel.textContent = lastSync !== null ? 'Показаны последние сохранённые данные Notion'
+        : !WidgetConfig.hasApi ? 'Сервис данных ещё не подключён.'
+        : !accessKey ? 'Открой виджет из Notion: требуется ключ доступа.'
+        : 'Данные Notion пока недоступны';
+      syncLabel.hidden = false;
+    } finally {
+      refreshing = false;
+    }
+  }
+  window.setInterval(() => {
+    updateCountdown();
+    refresh();
+  }, pollMs);
+
+  stage.addEventListener('click', () => {
+    phase = .25;
+    sway(.38, -direction);
+  });
+  stage.addEventListener('pointermove', event => {
+    if (event.pointerType === 'touch') return;
+    const delta = lastX === undefined ? 0 : event.clientX - lastX;
+    lastX = event.clientX;
+    if (Math.abs(delta) > 1) sway(Math.min(.18, Math.abs(delta) * .015), Math.sign(delta));
+  });
+  stage.addEventListener('pointerleave', () => { lastX = undefined; });
+
+  reduced.addEventListener('change', wake);
+  document.addEventListener('visibilitychange', () => {
+    updateCountdown();
+    refresh();
+    wake();
+  });
+  new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    wake();
+  }).observe(stage);
+  function updatePalette() {
+    dark = getComputedStyle(panel).backgroundColor === 'rgb(42, 42, 41)';
+    paint();
+  }
+
+  scheme.addEventListener('change', updatePalette);
+  updatePalette();
+  new ResizeObserver(resize).observe(stage);
+  resize();
+  wake();
+  refresh();
+})();
+</script>
+
+</body>
+</html>

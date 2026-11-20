@@ -1,0 +1,9 @@
+[Unit]
+Description=Run Notion Habits Rollover every night at 00:00 UTC (03:00 MSK)
+
+[Timer]
+OnCalendar=*-*-* 00:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

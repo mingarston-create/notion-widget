@@ -1,10 +1,10 @@
 /* Durable, shared outbox for both Notion embeds. No credentials in source. */
 (function (root) {
   'use strict';
-  const API = 'https://153.76.192.118:8443/api/habits';
   const DB_NAME = 'notion-habits-durable-v3';
   let dbPromise, flushing = false, snapshot = null, outbox = [], error = '', storageError = '', remoteError = '', timer;
   const subscribers = new Set();
+  const pendingWrites = new Map();
   const params = new URLSearchParams(root.location.hash.slice(1));
   let key = params.get('key') || '';
   try { if (key) localStorage.setItem('habits-access-v3', key); else key = localStorage.getItem('habits-access-v3') || ''; } catch (_) {}
@@ -113,7 +113,9 @@
       result.stats.history[result.today] ||= [];
       // Accepted but not yet mirrored operations are also overlaid until their
       // receipt is visible in a fresh snapshot. The server snapshot is authoritative.
-      for (const op of outbox) {
+      const queuedIds = new Set(outbox.map(operation => operation.operation_id));
+      const saving = [...pendingWrites.values()].filter(operation => !queuedIds.has(operation.operation_id));
+      for (const op of [...outbox, ...saving]) {
         let list = result.stats.history[op.date] ||= [];
         list = list.filter(id => id !== op.id);
         if (op.done) list.push(op.id);
@@ -129,19 +131,19 @@
       result.stats.today_count = result.completed_today.length;
       result.stats.total = Math.max(Object.keys(result.habits).length,result.stats.totals[result.today] || 0);
     }
-    return {data:result,pending:outbox.length,error:storageError || error || (outbox.find(o=>o.blocked)?'Запись сохранена и требует проверки: '+outbox.find(o=>o.blocked).blocked:'') || remoteError,hasKey:!!key,ready:!!result && !storageError,blocked:outbox.some(o=>o.blocked)};
+    return {data:result,saving:pendingWrites.size,pending:outbox.length,error:storageError || error || (outbox.find(o=>o.blocked)?'Запись сохранена и требует проверки: '+outbox.find(o=>o.blocked).blocked:'') || remoteError,hasKey:!!key,ready:!!result && !storageError,blocked:outbox.some(o=>o.blocked)};
   }
   function renderStatus(element,value){
     const failure=value.error || value.data?.sync.error;
-    const pending=value.pending || value.data?.sync.pending_days;
+    const pending=value.saving || value.pending || value.data?.sync.pending_days;
     const status=failure?'error':pending?'pending':value.data?'ok':'loading';
-    const label=failure || (value.pending?'Сохранено на устройстве. Ожидает отправки: '+value.pending:value.data?.sync.pending_days?'Сохранено на сервере. Передаём в Notion':value.data?'Синхронизировано с Notion':'Загрузка');
+    const label=failure || (value.saving?'Сохраняем на устройстве':value.pending?'Сохранено на устройстве. Ожидает отправки: '+value.pending:value.data?.sync.pending_days?'Сохранено на сервере. Передаём в Notion':value.data?'Синхронизировано с Notion':'Загрузка');
     element.textContent='';element.dataset.state=status;element.title=label;element.setAttribute('aria-label',label);
   }
   async function request(path, options = {}) {
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 12000);
     try {
-      const response = await fetch(API+path, {...options,cache:'no-store',signal:controller.signal,headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json',...options.headers}});
+      const response = await fetch(root.WidgetConfig.apiUrl('/api/habits'+path), {...options,cache:'no-store',signal:controller.signal,headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json',...options.headers}});
       const value = await response.json().catch(() => ({}));
       if (!response.ok) { const e = new Error(value.error || 'Сервер временно недоступен'); e.status = response.status; throw e; }
       return value;
@@ -151,6 +153,11 @@
     await transaction(['meta'], 'readwrite', tx => {const meta=tx.objectStore('meta'),r=meta.get('snapshot');r.onsuccess=()=>{const old=r.result;if(newer(data,old)){meta.put(data,'snapshot');snapshot=data;}else snapshot=old;};});
   }
   async function refresh() {
+    if (!root.WidgetConfig.hasApi) {
+      remoteError='Сервис данных ещё не подключён.';
+      notify();
+      return;
+    }
     if (!key) { error='Открой виджет из Notion: требуется ключ доступа.';notify();return; }
     try {
       const data=await request('/status');
@@ -169,13 +176,24 @@
     const instant=new Date(), captured=clock();
     const op = {operation_id:crypto.randomUUID(),id,date:date || effectiveDate(instant,captured.timezone),done,created_at:instant.toISOString()};
     if(!date)Object.assign(op,{timezone:captured.timezone,clock_revision:captured.revision,cutoff_hour:3});
+    pendingWrites.set(op.operation_id, op);
+    error='';
+    notify();
     try {
       await transaction(['meta','outbox'],'readwrite',tx => {
         const meta=tx.objectStore('meta'), request=meta.get('sequence');
         request.onsuccess=()=>{op.sequence=(request.result || 0)+1;meta.put(op.sequence,'sequence');tx.objectStore('outbox').add(op);};
       });
-      await readLocal();error='';notify();broadcast();flush();
-    } catch (e) { storageError='Не удалось сохранить на устройстве. Отметка не принята.';notify();throw e; }
+      await readLocal();
+    } catch (e) {
+      storageError='Не удалось сохранить отметку на устройстве.';
+      throw e;
+    } finally {
+      pendingWrites.delete(op.operation_id);
+      notify();
+    }
+    broadcast();
+    flush();
   }
   async function drain(limit = Infinity) {
     let processed=0;
@@ -203,7 +221,7 @@
     await readLocal();notify();
   }
   async function flush() {
-    if(flushing || !key || storageError) return;
+    if(flushing || !key || storageError || !root.WidgetConfig.hasApi) return;
     flushing=true;
     try {
       // Serialize tabs; the persisted lease is the fallback for older browsers.

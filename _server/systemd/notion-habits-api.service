@@ -1,0 +1,25 @@
+[Unit]
+Description=Durable Notion Habits API and synchronization worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=notion-habits
+Group=notion-habits
+WorkingDirectory=/opt/habits_api
+Environment=HABITS_CONFIG=/etc/notion-habits/config.json
+Environment=HABITS_DB=/var/lib/notion-habits/journal.sqlite3
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/usr/bin/python3 /opt/habits_api/service.py
+Restart=always
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/notion-habits
+
+[Install]
+WantedBy=multi-user.target

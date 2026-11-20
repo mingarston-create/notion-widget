@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh Notion donation totals every two minutes
+
+[Timer]
+OnBootSec=40s
+OnUnitInactiveSec=2min
+AccuracySec=10s
+Unit=notion-donation-sync.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=Nightly Notion Habits Rollover
+After=network.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/habits_api
+ExecStart=/usr/bin/python3 /opt/habits_api/nightly_rollover.py
