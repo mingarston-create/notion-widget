@@ -13,7 +13,7 @@ function fallbackPlan(data,key){
  }
  return {daily,weekly};
 }
-function plan(data,key){const fallback=fallbackPlan(data,key);return {daily:data.stats.daily_plans?.[key]||fallback.daily,weekly:data.stats.weekly_plans?.[key]||fallback.weekly};}
+function plan(data,key){const daily=data.stats.daily_plans?.[key],weekly=data.stats.weekly_plans?.[key];if(daily&&weekly)return {daily,weekly};const fallback=fallbackPlan(data,key);return {daily:data.stats.daily_plans?.[key]||fallback.daily,weekly:data.stats.weekly_plans?.[key]||fallback.weekly};}
 function day(data,key){
  const exists=Object.prototype.hasOwnProperty.call(data.stats.history,key),future=key>data.today,p=plan(data,key),done=data.stats.history[key]||[];
  const completed=p.daily.filter(id=>done.includes(id)),total=p.daily.length;

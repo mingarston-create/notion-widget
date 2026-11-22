@@ -2,6 +2,8 @@
   "notion_token": "",
   "api_key": "",
   "donation_api_key": "",
+  "books_api_key": "",
+  "books_data_source": "",
   "tracker_timezone": "Europe/Moscow",
   "databases": {
     "habits_catalog": "",

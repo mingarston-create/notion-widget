@@ -9,7 +9,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
-TIME_ZONE = ZoneInfo("Europe/Amsterdam")
+DEFAULT_ZONE = "Europe/Moscow"
 
 def query_donations(token, settings):
     source_id = settings['data_source']
@@ -54,9 +54,10 @@ def query_donations(token, settings):
         cursors.add(cursor)
         filters["start_cursor"] = cursor
 
-def aggregate(rows, now, settings):
+def aggregate(rows, now, settings, timezone=DEFAULT_ZONE):
+    zone = ZoneInfo(timezone)
     blood, plasma = settings['blood_option'], settings['plasma_option']
-    today = now.astimezone(TIME_ZONE).date()
+    today = now.astimezone(zone).date()
     counts = {blood: 0, plasma: 0}
     latest = None
     latest_kind = None
@@ -76,7 +77,7 @@ def aggregate(rows, now, settings):
         if len(raw_date) == 10:
             donation_date = dt.date.fromisoformat(raw_date)
         else:
-            donation_date = dt.datetime.fromisoformat(raw_date).astimezone(TIME_ZONE).date()
+            donation_date = dt.datetime.fromisoformat(raw_date.replace('Z','+00:00')).astimezone(zone).date()
         if donation_date > today:
             continue
         if latest is None or donation_date > latest or (donation_date == latest and kind == blood):
@@ -89,6 +90,7 @@ def aggregate(rows, now, settings):
         "plasma": counts[plasma],
         "lastDonation": latest.isoformat() if latest else None,
         "lastDonationKind": latest_kind,
+        "timezone": timezone,
         "syncedAt": now.isoformat(timespec="seconds"),
     }
 
@@ -108,7 +110,7 @@ def main():
     config = json.loads(config.read_text())
     settings = config['donation']
     donations = query_donations(config['notion_token'], settings)
-    snapshot = aggregate(donations, dt.datetime.now(dt.timezone.utc), settings)
+    snapshot = aggregate(donations, dt.datetime.now(dt.timezone.utc), settings, config.get("tracker_timezone", DEFAULT_ZONE))
     save_snapshot(Path(os.environ["STATE_DIRECTORY"]) / "data.json", snapshot)
 
 if __name__ == "__main__":

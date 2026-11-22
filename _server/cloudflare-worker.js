@@ -1,5 +1,6 @@
 const pagesOrigin = 'https://mingarston-create.github.io';
 const routes = new Map([
+  ['/api/books/status', 'GET'],
   ['/health', 'GET'],
   ['/api/habits/status', 'GET'],
   ['/api/habits/events', 'POST'],
