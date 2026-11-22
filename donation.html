@@ -102,10 +102,10 @@ html, body { margin: 0; background: transparent; }
 }
 #donation-flask .donor-denominator { color: var(--quiet); font-size: clamp(12px, 2cqw, 16px); }
 #donation-flask .donor-total {
-  grid-column: 1 / -1;
+  grid-column: 1;
   grid-row: 1;
   color: var(--ink);
-  text-align: center;
+  justify-self: start;
   white-space: nowrap;
 }
 #donation-flask [data-remaining] {
@@ -127,15 +127,10 @@ html, body { margin: 0; background: transparent; }
   color: var(--quiet);
   font-size: 13px;
 }
-#donation-flask .donor-total,
-#donation-flask .donor-next-options {
-  width: 100%;
-  max-width: 264px;
-}
 #donation-flask .donor-next-options {
   display: grid;
-  grid-column: 1;
-  grid-row: 1;
+  width: 100%;
+  max-width: 264px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 }
@@ -149,7 +144,8 @@ html, body { margin: 0; background: transparent; }
   color: var(--ink);
   font-size: 12px;
   text-align: center;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 #donation-flask .donor-option.is-ready {
   background: light-dark(#e7efe9, #303f36);
@@ -189,7 +185,7 @@ html, body { margin: 0; background: transparent; }
 }
 @container (max-width: 520px) {
   #donation-flask .donor-summary {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
   }
   #donation-flask .donor-breakdown {
     grid-column: 1 / -1;
@@ -203,23 +199,14 @@ html, body { margin: 0; background: transparent; }
     width: calc(100% + 12px);
     margin-inline: -6px;
   }
-  #donation-flask .donor-next-options {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
 }
 @container (max-width: 260px) {
   #donation-flask .donor-option, #donation-flask .donor-option strong { font-size: 11px; }
-  #donation-flask .donor-next-options { grid-row: 1; }
-  #donation-flask .donor-percent { grid-row: 2; }
 }
 @container (max-width: 240px) {
   #donation-flask .donor-percent { font-size: 19px; }
   #donation-flask .donor-stage { height: 94px; }
   #donation-flask .donor-next { font-size: 11px; }
-}
-@container (max-width: 225px) {
-  #donation-flask .donor-next-options { grid-template-columns: 1fr; }
 }
 @container (max-width: 150px) {
   #donation-flask .donor-stage { height: 80px; }
