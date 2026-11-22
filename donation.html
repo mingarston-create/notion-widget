@@ -250,9 +250,11 @@ html, body { margin: 0; background: transparent; }
   const plural = new Intl.PluralRules('ru-RU');
   const units = {one: 'донация', few: 'донации', many: 'донаций', other: 'донации'};
   const dayUnits = {one: 'день', few: 'дня', many: 'дней', other: 'дня'};
-  const calendar = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Amsterdam', year: 'numeric', month: '2-digit', day: '2-digit'
+  function makeCalendar(zone){ return new Intl.DateTimeFormat('en-CA', {
+    timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit'
   });
+  }
+  let calendar = makeCalendar('Europe/Moscow');
   const dayMs = 86400000;
   // Annex 7 of Orders 1166n and 215n. Index by the previous donation type.
   const intervals = {blood: {blood: 60, plasma: 30}, plasma: {blood: 14, plasma: 14}};
@@ -555,6 +557,7 @@ html, body { margin: 0; background: transparent; }
     }
     if (lastSync === syncTime) return;
 
+    calendar=makeCalendar(snapshot.timezone || 'Europe/Moscow');
     const total = blood + plasma;
     const remaining = Math.max(0, goal - total);
     lastSync = syncTime;

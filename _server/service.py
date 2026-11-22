@@ -9,6 +9,8 @@ import os
 import sqlite3
 import threading
 import time
+import uuid
+import urllib.parse
 import urllib.request
 import urllib.error
 from pathlib import Path
@@ -44,6 +46,10 @@ def streaks(history, day):
         date -= dt.timedelta(days=1)
     return current, best
 
+class HabitConflict(ValueError):
+    """A newer operation changed the same habit and day."""
+
+
 class ClosingConnection(sqlite3.Connection):
     def __exit__(self, *args):
         try:return super().__exit__(*args)
@@ -52,6 +58,7 @@ class ClosingConnection(sqlite3.Connection):
 class Store:
     def __init__(self, path, legacy_aliases=None):
         self.path = str(path)
+        self.started_at = time.time()
         self.legacy_aliases = legacy_aliases or {}
         self._clock_export_lock = threading.Lock()
         with self.connect() as c:
@@ -59,9 +66,13 @@ class Store:
             CREATE TABLE IF NOT EXISTS habits(id TEXT PRIMARY KEY, data TEXT NOT NULL, active INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS days(date TEXT PRIMARY KEY, done TEXT NOT NULL, total INTEGER NOT NULL, page TEXT, version INTEGER NOT NULL DEFAULT 1, synced INTEGER NOT NULL DEFAULT 0);
             CREATE TABLE IF NOT EXISTS operations(id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, date TEXT NOT NULL, habit TEXT NOT NULL, done INTEGER NOT NULL, accepted REAL NOT NULL);
+            CREATE INDEX IF NOT EXISTS operations_pair ON operations(date, habit);
             CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
             ''')
             if 'plan' not in [r[1] for r in c.execute('PRAGMA table_info(days)')]:c.execute('ALTER TABLE days ADD COLUMN plan TEXT')
+            c.execute("INSERT OR IGNORE INTO meta VALUES ('journal_id',?)", (json.dumps(uuid.uuid4().hex),))
+        self.journal_id = self.meta('journal_id')
+
     def connect(self):
         c = sqlite3.connect(self.path, timeout=30, factory=ClosingConnection)
         c.row_factory = sqlite3.Row
@@ -194,12 +205,13 @@ class Store:
         with self.connect() as c:
             c.execute('BEGIN IMMEDIATE')
             catalog={r['id']:(json.loads(r['data']),r['active']) for r in c.execute('SELECT * FROM habits')}
-            rows=list(c.execute('SELECT * FROM days ORDER BY date'))
+            missing=c.execute('SELECT 1 FROM days WHERE plan IS NULL AND date!=? LIMIT 1',(day,)).fetchone()
+            rows=list(c.execute('SELECT * FROM days ORDER BY date')) if missing else list(c.execute('SELECT * FROM days WHERE date=?',(day,)))
             first={key:h.get('created') or day for key,(h,active) in catalog.items()}
             for row in rows:
                 for key in json.loads(row['done']):
                     if key in first:first[key]=min(first[key],row['date'])
-            newest=max([r['date'] for r in rows]+[day])
+            newest=c.execute('SELECT MAX(date) FROM days').fetchone()[0] or day
             for row in rows:
                 if row['plan'] is not None and (row['date']!=day or day<newest):continue
                 eligible={key:h for key,(h,active) in catalog.items() if (active if row['date']==day else first[key]<=row['date'])}
@@ -238,6 +250,30 @@ class Store:
             if not h:raise ValueError('Unknown habit; waiting for catalog refresh may help')
             h=json.loads(h[0]); row=c.execute('SELECT * FROM days WHERE date=?',(date,)).fetchone()
             values=json.loads(row['done']) if row else {}
+            if 'base_revision' in data:
+                base = data['base_revision']
+                if type(base) is not int or base < 0:
+                    raise ValueError('Некорректная версия отметки')
+                head = c.execute('SELECT rowid, id FROM operations WHERE date=? AND habit=? ORDER BY rowid DESC LIMIT 1',
+                                 (date, key)).fetchone()
+                latest = c.execute('SELECT COALESCE(MAX(rowid),0) FROM operations').fetchone()[0]
+                anchor = c.execute('SELECT id FROM operations WHERE rowid=?',(base,)).fetchone() if base else None
+                obsolete = data.get('journal_id') != self.journal_id or base > latest
+                if 'base_operation' in data:
+                    obsolete |= data['base_operation'] != (anchor[0] if anchor else None)
+                intervening = head and head[0] > base and head['id'] != data.get('previous_operation')
+                if (obsolete or intervening) and (key in values) != done:
+                    raise HabitConflict('Эту отметку уже изменили. Выбери, какую версию сохранить.')
+            elif (key in values) != done:
+                head=c.execute('SELECT accepted FROM operations WHERE date=? AND habit=? ORDER BY rowid DESC LIMIT 1',
+                               (date,key)).fetchone()
+                if head:
+                    try:
+                        stamp=dt.datetime.fromisoformat(data['created_at'].replace('Z','+00:00'))
+                        ambiguous=stamp.tzinfo is None or stamp.timestamp()<=head[0]
+                    except (KeyError,ValueError,TypeError,AttributeError):
+                        ambiguous=True
+                    if ambiguous:raise HabitConflict('Более поздняя отметка уже сохранена. Требуется сверка.')
             if done:values[key]=h['icon']+' '+h['title']
             else:values.pop(key,None)
             encoded=json.dumps(values,ensure_ascii=False)
@@ -258,7 +294,8 @@ class Store:
         with self.connect() as c:
             c.execute('BEGIN')
             rows=list(c.execute('SELECT * FROM days ORDER BY date'))
-            revision=c.execute('SELECT COUNT(*) FROM operations').fetchone()[0]
+            head=c.execute('SELECT rowid,id FROM operations ORDER BY rowid DESC LIMIT 1').fetchone()
+            revision=head[0] if head else 0
         history={r['date']:list(json.loads(r['done'])) for r in rows}
         totals={r['date']:r['total'] for r in rows}
         start=dt.date.fromisoformat(day);start-=dt.timedelta(days=start.weekday())
@@ -268,17 +305,31 @@ class Store:
         plans={r['date']:json.loads(r['plan'] or '{}') for r in rows}
         daily_history={date:[key for key in ids if key in plans.get(date,{}).get('daily',[])] for date,ids in history.items()}
         cur,best=streaks(daily_history,day)
-        return {'revision':revision,'generated_at':time.time(),'clock':clock,'today':day,'timezone':clock['timezone'],'cutoff':'03:00','habits':active,'catalog':catalog,'completed_today':history.get(day,[]),'stats':{'daily_plans':{date:p.get('daily',[]) for date,p in plans.items()},'weekly_plans':{date:p.get('weekly',{}) for date,p in plans.items()},'history':history,'totals':totals,'today_count':len(history.get(day,[])),'total':max(totals.get(day,len(active)),len(active)),'current_streak':cur,'best_streak':best},'sync':{'pending_days':sum(r['version']!=r['synced'] for r in rows),'last_notion_sync':self.meta('last_sync'),'catalog_at':self.meta('catalog_at'),'error':self.meta('sync_error'),'initialized':self.meta('initialized',False)}}
+        return {'journal_id':self.journal_id,'server_started_at':self.started_at,'base_operation':head[1] if head else None,'revision':revision,'generated_at':time.time(),'clock':clock,'today':day,'timezone':clock['timezone'],'cutoff':'03:00','habits':active,'catalog':catalog,'completed_today':history.get(day,[]),'stats':{'daily_plans':{date:p.get('daily',[]) for date,p in plans.items()},'weekly_plans':{date:p.get('weekly',{}) for date,p in plans.items()},'history':history,'totals':totals,'today_count':len(history.get(day,[])),'total':max(totals.get(day,len(active)),len(active)),'current_streak':cur,'best_streak':best},'sync':{'projection_pending':self.meta('projection_revision',-1)<revision,'pending_days':sum(r['version']!=r['synced'] for r in rows),'last_notion_sync':self.meta('last_sync'),'catalog_at':self.meta('catalog_at'),'error':self.meta('sync_error') or self.meta('projection_error'),'initialized':self.meta('initialized',False)}}
 
 class Notion:
     def __init__(self, token, databases):
+        self._limit_lock = threading.Lock()
+        self._resume = 0.0
         self.token = token
         self.catalog_id = databases['habits_catalog']
         self.log_id = databases['habits_log']
         self.tasks_id = databases['tasks']
-    def request(self, path, body=None, method=None):
-        req=urllib.request.Request('https://api.notion.com/v1/'+path,data=json.dumps(body).encode() if body is not None else None,method=method,headers={'Authorization':'Bearer '+self.token,'Notion-Version':'2022-06-28','Content-Type':'application/json'})
-        with urllib.request.urlopen(req,timeout=20) as r:return json.load(r)
+    def request(self, path, body=None, method=None, version='2022-06-28'):
+        req=urllib.request.Request('https://api.notion.com/v1/'+path,data=json.dumps(body).encode() if body is not None else None,method=method,headers={'Authorization':'Bearer '+self.token,'Notion-Version':version,'Content-Type':'application/json'})
+        while True:
+            with self._limit_lock:
+                delay = self._resume - time.monotonic()
+            if delay <= 0:break
+            time.sleep(delay)
+        try:
+            with urllib.request.urlopen(req,timeout=20) as r:return json.load(r)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 429:
+                try:seconds = max(1, int(exc.headers.get('Retry-After', '10')))
+                except ValueError:seconds = 10
+                with self._limit_lock:self._resume = max(self._resume, time.monotonic()+seconds)
+            raise
     def query(self, db, body=None):
         body=dict(body or {});body['page_size']=100;rows=[]
         while True:
@@ -295,6 +346,47 @@ def rating(n, total, date, current_day=None):
     if ratio>=.5:return '👍 Хорошо'
     return '🌱 Начало'
 
+def manual_event(store, source, row, day, habit, done, revision):
+    signature = [source, row['id'], row.get('last_edited_time'), day, habit, done, revision]
+    op = hashlib.sha256(json.dumps(signature).encode()).hexdigest()
+    store.accept({'id':habit, 'date':day, 'done':done, 'operation_id':op,
+                  'journal_id':store.journal_id, 'base_revision':revision})
+
+
+def reconcile_log(store, page):
+    """Import changes to the multiselect since our last confirmed publication."""
+    with store.connect() as db:
+        local = db.execute('SELECT * FROM days WHERE page=?',(page['id'],)).fetchone()
+        revision = db.execute('SELECT COALESCE(MAX(rowid),0) FROM operations').fetchone()[0]
+    if not local:return False
+    day = local['date']
+    if (page['properties'].get('Дата',{}).get('date') or {}).get('start') != day:
+        raise ValueError('Дата страницы отличается от даты журнала')
+    labels = sorted(v['name'] for v in page['properties']['Привычки']['multi_select'])
+    slot = 'published_log:'+day
+    base = store.meta(slot)
+    local_values = json.loads(local['done'])
+    if base is None:
+        if local['version']!=local['synced'] and sorted(local_values.values())!=labels:
+            raise HabitConflict('Сверьте отметки незавершённой публикации за '+day)
+        base = {'labels':sorted(local_values.values()),'revision':revision}
+    catalog = store.catalog()
+    aliases = {}
+    for key,h in catalog.items():
+        for label in h['aliases']+[h['title']]:aliases.setdefault(label,set()).add(key)
+    for key,label in local_values.items():aliases.setdefault(label,set()).add(key)
+    changes = set(labels)^set(base['labels'])
+    if any(len(aliases.get(label,()))!=1 for label in changes):
+        raise ValueError('Неоднозначная или неизвестная отметка в журнале')
+    old_ids={next(iter(aliases[v])) for v in base['labels'] if len(aliases.get(v,()))==1}
+    ids={next(iter(aliases[v])) for v in labels if len(aliases.get(v,()))==1}
+    for key in old_ids ^ ids:
+        manual_event(store,'log',page,day,key,key in ids,base['revision'])
+    if not store.meta(slot) or changes:
+        store.set_meta(slot,{'labels':labels,'revision':revision})
+    return bool(changes)
+
+
 def sync_day(store, notion, row):
     day=row['date'];values=json.loads(row['done'])
     page=row['page']
@@ -304,6 +396,7 @@ def sync_day(store, notion, row):
         if found:page=found[0]['id']
         elif time.time()-store.meta('uncertain_create:'+day,0)<120:raise RuntimeError('Waiting to reconcile an uncertain Notion page creation')
     snapshot=store.snapshot();history=snapshot['stats']['history']
+    if set(history.get(day,[]))!=set(values):return
     daily_ids=snapshot['stats']['daily_plans'].get(day,[])
     daily_done=sum(key in daily_ids for key in values)
     weekly_ids=snapshot['stats']['weekly_plans'].get(day,{})
@@ -317,6 +410,8 @@ def sync_day(store, notion, row):
         props.update({'Ежедневных выполнено':{'number':daily_done},'Ежедневных всего':{'number':len(daily_ids)},'Недельных выполнено':{'number':sum(key in weekly_ids for key in values)}})
     if page:
         existing=notion.request('pages/'+page)
+        if reconcile_log(store,existing):
+            return  # Recalculate the derived fields from the imported edit in the next pass.
         old_title=''.join(t.get('plain_text',t.get('text',{}).get('content','')) for t in existing.get('properties',{}).get('День',{}).get('title',[]))
         if day!=snapshot['today'] and not old_title.startswith('Сегодня'):props.pop('День')
         notion.request('pages/'+page,{'properties':props},'PATCH')
@@ -325,40 +420,84 @@ def sync_day(store, notion, row):
         except Exception:
             store.set_meta('uncertain_create:'+day,time.time())
             raise
-    with store.connect() as c:c.execute('UPDATE days SET page=?,synced=? WHERE date=?',(page,row['version'],day))
+    with store.connect() as c:
+        c.execute('UPDATE days SET page=?,synced=? WHERE date=?',(page,row['version'],day))
+        published={'labels':sorted(values.values()),'revision':snapshot['revision']}
+        c.execute('INSERT OR REPLACE INTO meta VALUES (?,?)',('published_log:'+day,json.dumps(published)))
     store.set_meta('last_sync',time.time())
 
 def sync_projection(store, notion, rows):
     snap=store.snapshot(); history=snap['stats']['history'];start=dt.date.fromisoformat(snap['today']);start-=dt.timedelta(days=start.weekday())
+    conflicts=[]
     for row in rows:
+        key=row['id']
+        slot='published_checks:'+key
+        before=store.meta(slot,{})
+        next_base={}
         props={}
-        for index,col in enumerate(DAYS):
-            value=row['id'] in history.get((start+dt.timedelta(days=index)).isoformat(),[])
-            if row['properties'].get(col,{}).get('checkbox',False)!=value:props[col]={'checkbox':value}
-        if store.meta('clock_projection_schema'):
-            value=row['id'] in history.get(snap['today'],[])
-            if row['properties'].get('Сегодня отмечено',{}).get('checkbox',False)!=value:props['Сегодня отмечено']={'checkbox':value}
-        if props:notion.request('pages/'+row['id'],{'properties':props},'PATCH');time.sleep(.36)
+        columns={col:(start+dt.timedelta(days=index)).isoformat() for index,col in enumerate(DAYS)}
+        if store.meta('clock_projection_schema'):columns['Сегодня отмечено']=snap['today']
+        for col,day in columns.items():
+            if col not in row['properties']:continue
+            actual=row['properties'][col]['checkbox']
+            base=before.get(col)
+            desired=key in history.get(day,[])
+            if base and base['date']==day and actual!=base['done'] and day<=snap['today']:
+                try:manual_event(store,'checkbox:'+col,row,day,key,actual,base['revision'])
+                except HabitConflict:
+                    conflicts.append(day+' · '+snap['catalog'][key]['title'])
+                    next_base[col]=base
+                    continue
+                desired=actual
+            if actual!=desired:props[col]={'checkbox':desired}
+            next_base[col]={'date':day,'done':desired,'revision':snap['revision']}
+        if props:
+            notion.request('pages/'+key,{'properties':props},'PATCH')
+            time.sleep(.36)
+        if before!=next_base:store.set_meta(slot,next_base)
+    store.set_meta('projection_error',('Сверьте флажок в Notion: '+', '.join(conflicts)) if conflicts else None)
+    if not conflicts:store.set_meta('projection_revision',snap['revision'])
+
 
 class Worker(threading.Thread):
     def __init__(self,store,notion):
         super().__init__(daemon=True);self.store=store;self.notion=notion;self.wake=threading.Event();self.stop=threading.Event()
     def run(self):
-        last_catalog=0;last_projection=0;backoff=1;rows=[];last_clock_revision=None
+        last_catalog=0;last_projection=0;backoff=1;rows=[];last_clock_revision=None;retry_days={};log_check=0
         while not self.stop.is_set():
             try:
                 if time.time()-last_catalog>=30 or not self.store.meta('initialized'):
                     rows=self.notion.query(self.notion.catalog_id);self.store.refresh_catalog(rows);last_catalog=time.time()
                 if not self.store.meta('initialized'):self.store.import_history(self.notion.query(self.notion.log_id),rows)
+                if time.monotonic()-log_check>=30 or not log_check:
+                    checkpoint=utc_now()
+                    cursor=self.store.meta('manual_log_cursor')
+                    query={'filter':{'timestamp':'last_edited_time','last_edited_time':{'on_or_after':cursor}}} if cursor else None
+                    for page in self.notion.query(self.notion.log_id,query):
+                        try:
+                            reconcile_log(self.store,page)
+                        except (ValueError,KeyError) as exc:
+                            logging.warning('Manual log change requires review: %s',type(exc).__name__)
+                            with self.store.connect() as c:
+                                c.execute('UPDATE days SET version=version+1 WHERE page=? AND version=synced',(page['id'],))
+                    self.store.set_meta('manual_log_cursor',(checkpoint-dt.timedelta(seconds=60)).isoformat())
+                    log_check=time.monotonic()
                 self.store.ensure_days()
                 self.store.ensure_plans()
                 with self.store.connect() as c:dirty=list(c.execute('SELECT * FROM days WHERE version!=synced ORDER BY date'))
                 for row in dirty:
-                    sync_day(self.store,self.notion,row);time.sleep(.4)
+                    if retry_days.get(row['date'],0)>time.monotonic():continue
+                    try:
+                        sync_day(self.store,self.notion,row)
+                        retry_days.pop(row['date'],None)
+                    except Exception as exc:
+                        logging.warning('Day synchronization deferred: %s %s',row['date'],type(exc).__name__)
+                        retry_days[row['date']]=time.monotonic()+60
+                    time.sleep(.4)
                 if dirty or time.time()-last_projection>=60 or last_clock_revision!=self.store.clock()['revision']:
                     # Fetch fresh checkboxes; never treat them as the primary history after import.
                     fresh=self.notion.query(self.notion.catalog_id);sync_projection(self.store,self.notion,fresh);last_projection=time.time();last_clock_revision=self.store.clock()['revision']
-                self.store.set_meta('sync_error',None);backoff=1
+                self.store.set_meta('sync_error',('Требует проверки журнал за '+', '.join(sorted(retry_days))) if retry_days else None);backoff=1
             except Exception as error:
                 # Do not log credentials, URLs with secrets, or HTTP response bodies.
                 logging.warning('Notion synchronization deferred: %s',type(error).__name__)
@@ -393,13 +532,35 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_response(204);self.send_header('Access-Control-Allow-Origin',ORIGIN);self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS');self.send_header('Access-Control-Allow-Headers','Content-Type, Authorization');self.end_headers()
     def do_GET(self):
         if self.path=='/health':self.reply(200,{'status':'ok'});return
+        if self.path.split('?')[0]=='/api/books/status':
+            if not self.authorized(self.server.books_key):return
+            if not self.server.books.source:self.reply(503,{'error':'Источник книг ещё не настроен'});return
+            try:data=self.server.books.snapshot(self.server.store.clock()['timezone'])
+            except Exception:self.reply(503,{'error':'Не удалось обновить счётчик книг'});return
+            self.reply(200,data);return
         if self.path.split('?')[0]=='/api/donation/status':
             self.donation_status()
             return
         if not self.authorized(self.server.api_key):return
         if self.path.split('?')[0]=='/api/tasks/status':self.reply(200,self.server.tasks.snapshot());return
         if self.path.split('?')[0]!='/api/habits/status':self.reply(404,{'error':'Not found'});return
-        self.reply(200,self.server.store.snapshot())
+        data=self.server.store.snapshot()
+        query=urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+        if query.get('scope') in (['week'],['calendar']):
+            start=dt.date.fromisoformat(data['today'])
+            monday=(start-dt.timedelta(days=start.weekday())).isoformat()
+            month=query.get('month',[data['today'][:7]])[0] if query['scope']==['calendar'] else None
+            for field in ('daily_plans','weekly_plans','history','totals'):
+                data['stats'][field]={k:v for k,v in data['stats'][field].items() if monday<=k<=data['today'] or (month and k[:7]==month)}
+            data['scope']=query['scope'][0]
+            # Only stable, visible values should invalidate a polling client.
+            version_data={k:v for k,v in data.items() if k not in ('generated_at','sync')}
+            version_data['sync']={k:v for k,v in data['sync'].items() if k!='catalog_at'}
+            token=hashlib.sha256(json.dumps(version_data,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+            if query.get('since')==[token]:
+                self.reply(200,{'unchanged':token,'generated_at':data['generated_at']});return
+            data['token']=token
+        self.reply(200,data)
     def do_POST(self):
         if not self.authorized(self.server.api_key):return
         if self.path.split('?')[0] not in ['/api/habits/events','/api/habits/toggle']:self.reply(404,{'error':'Not found'});return
@@ -409,6 +570,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             data=json.loads(self.rfile.read(length))
             result=self.server.store.accept(data)
             self.server.worker.wake.set();self.reply(202,result)
+        except HabitConflict as error:self.reply(409,{'error':str(error)})
         except (ValueError,TypeError) as error:self.reply(400,{'error':str(error)})
         except Exception:self.reply(503,{'error':'Запись не подтверждена. Повторите отправку.'})
 
@@ -426,11 +588,15 @@ def main():
         os.environ.get('HABITS_DB', '/var/lib/notion-habits/journal.sqlite3'),
         config.get('legacy_habit_aliases'),
     )
-    store.configure_clock(config.get('tracker_timezone'))
+    store.configure_clock(config.get('tracker_timezone', 'Europe/Moscow'))
     store.clock()
     notion = Notion(config['notion_token'], databases)
     server = http.server.ThreadingHTTPServer(('127.0.0.1', int(os.environ.get('HABITS_PORT', '8080'))), Handler)
     from tasks import TaskWorker
+    from books import BookCounts
+    server.books = BookCounts(notion,config.get('books_data_source'))
+    server.books_key = config.get('books_api_key')
+    if server.books_key and server.books_key in (api_key,donation_api_key):raise ValueError('Configure a distinct read-only books key')
     server.store = store
     server.api_key = api_key
     server.donation_api_key = donation_api_key

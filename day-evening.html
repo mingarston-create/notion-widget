@@ -2728,7 +2728,7 @@ html,body{margin:0;padding:0;background:transparent;font-family:-apple-system,Bl
 </style>
 <script src="habits-metrics.js?v=widgets-v2"></script>
 <script src="widget-config.js?v=tunnel-v2"></script>
-<script src="habits-sync.js?v=server-clock-1"></script>
+<script src="habits-sync.js?v=delivery-v2"></script>
 <script>(()=>{
     let current=null, busy=new Set();
     const status=document.getElementById('sync-status');
@@ -2801,7 +2801,14 @@ html,body{margin:0;padding:0;background:transparent;font-family:-apple-system,Bl
  HabitsSync.subscribe(render);
 })();</script>
 <script>(()=>{
-const M=HabitMetrics,$=id=>document.getElementById(id);let current=null,monthKey=null;
+const M=HabitMetrics,$=id=>document.getElementById(id);let current=null,monthKey=null,monthData=null,requestNumber=0;
+async function showMonth(key){
+  const number=++requestNumber;
+  monthKey=key;monthData=null;render(current);
+  if(key===current?.data?.today.slice(0,7))return;
+  const data=await HabitsSync.loadMonth(key);
+  if(number===requestNumber && data){monthData=data;render(current);}
+}
 // Weekly completions add to the day's level without changing its daily target.
 function colorLevel(day) {
   const weekly = Math.min(2, day.weeklyDone.length);
@@ -2809,9 +2816,9 @@ function colorLevel(day) {
   if (day.ratio >= 1) return 3 + weekly;
   return (day.ratio >= 0.4 ? 2 : 1) + weekly;
 }
-function render(value){current=value;if(!value.data)return;const data=value.data;monthKey||=data.today.slice(0,7);const start=M.date(monthKey+'-01');const label=start.toLocaleDateString('ru-RU',{month:'long',year:'numeric',timeZone:'UTC'});$('this-month').textContent=label[0].toUpperCase()+label.slice(1);const grid=$('calendar');grid.replaceChildren();for(let i=0;i<(start.getUTCDay()+6)%7;i++){const blank=document.createElement('div');blank.setAttribute('aria-hidden','true');grid.append(blank);}const last=new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+1,0)).getUTCDate();for(let i=1;i<=last;i++){const key=monthKey+'-'+String(i).padStart(2,'0'),d=M.day(data,key),cell=document.createElement('div');cell.className='calendar-day'+(d.status==='future'?' future':!d.known?' unknown':'')+(key===data.today?' current':'');cell.dataset.date=key;if(d.known)cell.dataset.level=colorLevel(d);cell.textContent=i;cell.setAttribute('role','img');const status=d.status==='future'?'Будущий день':!d.known?'Нет данных':d.count+' из '+d.total+' ежедневных; недельных выполнено: '+d.weeklyDone.length;cell.setAttribute('aria-label',i+' '+label+' · '+status);cell.title=i+' '+label+' · '+status;grid.append(cell);}}
-function moveMonth(delta){if(!current?.data)return;const date=M.date(monthKey+'-01');date.setUTCMonth(date.getUTCMonth()+delta);monthKey=M.iso(date).slice(0,7);render(current);}
-$('previous').onclick=()=>moveMonth(-1);$('next').onclick=()=>moveMonth(1);$('this-month').onclick=()=>{if(current?.data){monthKey=current.data.today.slice(0,7);render(current);}};HabitsSync.subscribe(render);
+function render(value){current=value;if(!value.data)return;const data=monthData && monthKey!==value.data.today.slice(0,7)?monthData:value.data;monthKey||=data.today.slice(0,7);const start=M.date(monthKey+'-01');const label=start.toLocaleDateString('ru-RU',{month:'long',year:'numeric',timeZone:'UTC'});$('this-month').textContent=label[0].toUpperCase()+label.slice(1);const grid=$('calendar');grid.replaceChildren();for(let i=0;i<(start.getUTCDay()+6)%7;i++){const blank=document.createElement('div');blank.setAttribute('aria-hidden','true');grid.append(blank);}const last=new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+1,0)).getUTCDate();for(let i=1;i<=last;i++){const key=monthKey+'-'+String(i).padStart(2,'0'),d=M.day(data,key),cell=document.createElement('div');cell.className='calendar-day'+(d.status==='future'?' future':!d.known?' unknown':'')+(key===data.today?' current':'');cell.dataset.date=key;if(d.known)cell.dataset.level=colorLevel(d);cell.textContent=i;cell.setAttribute('role','img');const status=d.status==='future'?'Будущий день':!d.known?'Нет данных':d.count+' из '+d.total+' ежедневных; недельных выполнено: '+d.weeklyDone.length;cell.setAttribute('aria-label',i+' '+label+' · '+status);cell.title=i+' '+label+' · '+status;grid.append(cell);}}
+function moveMonth(delta){if(!current?.data)return;const date=M.date(monthKey+'-01');date.setUTCMonth(date.getUTCMonth()+delta);showMonth(M.iso(date).slice(0,7));}
+$('previous').onclick=()=>moveMonth(-1);$('next').onclick=()=>moveMonth(1);$('this-month').onclick=()=>{if(current?.data){showMonth(current.data.today.slice(0,7));}};HabitsSync.subscribe(render);
 })();</script>
 <script>
 (()=>{

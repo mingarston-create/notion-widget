@@ -133,12 +133,13 @@ h1{font-size:14px;letter-spacing:.09em;text-transform:uppercase;color:var(--text
 <div class="year-pod"><div class="year-top"><span class="year-title" id="year-title">Год</span><span class="year-left-chip" id="year-left">— дн. ост.</span></div><div class="year-bar-row"><span class="year-pct-big" id="year-pct">—%</span><div class="progress-track"><div class="progress-fill" id="year-fill"></div></div></div></div>
 </footer></main>
 <script src="widget-config.js?v=tunnel-v2"></script>
-  <script src="tasks-sync.js?v=tunnel-v2"></script>
+  <script src="tasks-sync.js?v=delivery-v2"></script>
 <script>
+let workspaceZone='Europe/Moscow';
 let metrics={inbox:0,urgent:0,active:0,pool:0,done:0,todayTotal:0,pct:0},hasMetrics=false;
 function renderMetrics(value){
- const dot=document.getElementById('task-sync-status');dot.dataset.state=value.status;dot.title=value.message;dot.setAttribute('aria-label',value.message);
- if(value.data){metrics=value.data.metrics;hasMetrics=true;}
+ const dot=document.getElementById('task-sync-status');dot.dataset.state=value.status;dot.title=value.message;dot.onclick=()=>window.alert(value.message+(value.data?.updated_at?' · Обновлено '+new Date(value.data.updated_at*1000).toLocaleString('ru-RU') : ''));dot.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();dot.click();}};dot.setAttribute('role','button');dot.setAttribute('aria-label',value.message);
+ if(value.data){metrics=value.data.metrics;hasMetrics=true;workspaceZone=value.data.timezone||workspaceZone;updateYear();}
  for(const [id,key] of [['task-inbox','inbox'],['task-burning','urgent'],['task-progress','active'],['task-todo','pool']])document.getElementById(id).textContent=hasMetrics?metrics[key]:'—';
  document.getElementById('task-done').textContent=hasMetrics?metrics.pct+'%':'—';
  document.getElementById('task-done-sub').textContent=hasMetrics?metrics.done+' из '+metrics.todayTotal:'Загрузка';
@@ -204,10 +205,10 @@ TaskSync.subscribe(renderMetrics);TaskSync.start();
 
     // 2. DYNAMIC YEAR PROGRESS
     function updateYear() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const start = new Date(year, 0, 1);
-      const end = new Date(year + 1, 0, 1);
+      const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:workspaceZone,year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',hourCycle:'h23'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
+      const year=Number(parts.year);
+      const now=Date.UTC(year,parts.month-1,parts.day,parts.hour,parts.minute);
+      const start=Date.UTC(year,0,1), end=Date.UTC(year+1,0,1);
 
       const elapsed = now - start;
       const total = end - start;

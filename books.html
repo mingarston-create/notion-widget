@@ -389,7 +389,7 @@
     <div class="pod">
       <div>
         <div class="pod-header">
-          <span class="pod-title">🏆 Вызов 2026</span>
+          <span id="challenge-year" class="pod-title">🏆 Вызов 2026</span>
           <div class="challenge-ctrls">
             <span class="challenge-badge" id="pct-badge">53%</span>
             <button class="ctrl-btn" onclick="changeRead(-1)" title="Убавить">−</button>
@@ -406,7 +406,7 @@
       </div>
       <div class="challenge-meta">
         <span id="left-label" style="color: var(--accent-gold); font-weight: 700;">Осталось: 7 книг</span>
-        <span>Золотой фонд: 45 книг</span>
+        <span id="collection-total">Золотой фонд: 45 книг</span>
       </div>
     </div>
 
@@ -460,6 +460,7 @@
 
   </div>
 
+  <script src="widget-config.js?v=tunnel-v2"></script>
   <script>
     // 1. Rich Clickable Notes from Notion Database
     const NOTES = [
@@ -508,7 +509,24 @@
 
     // 2. Reading Challenge Logic
     let TARGET = 15;
-    let READ = parseInt(localStorage.getItem('books_read_2026') || '8', 10);
+    let READ=8,shared=false;
+    try{const old=Number.parseInt(localStorage.getItem('books_read_2026'),10);if(Number.isFinite(old))READ=old;}catch{}
+    const booksKey=new URLSearchParams(location.hash.slice(1)).get('key');
+    let booksBusy=false,booksYear=2026;
+    async function refreshBooks(){
+      if(!booksKey||booksBusy||document.hidden)return;
+      booksBusy=true;
+      try{
+        const r=await fetch(WidgetConfig.apiUrl('/api/books/status'),{cache:'no-store',signal:AbortSignal.timeout(12000),headers:WidgetConfig.authHeaders(booksKey)});
+        if(!r.ok)throw new Error();
+        const d=await r.json();if(!Number.isInteger(d.count)||!Number.isInteger(d.year))throw new Error();
+        shared=true;READ=d.count;booksYear=d.year;
+        document.getElementById('challenge-year').textContent='🏆 Вызов '+d.year;
+        document.getElementById('collection-total').textContent='Прочитано всего: '+d.total;
+        updateChallenge();
+      }catch{document.getElementById('left-label').textContent=shared?'Показан последний полученный счётчик':'Ожидаем данные из Notion';}
+      finally{booksBusy=false;}
+    }
 
     function updateChallenge() {
       const pct = Math.min(100, Math.round((READ / TARGET) * 100));
@@ -518,13 +536,14 @@
       document.getElementById('target-count').innerText = TARGET;
       document.getElementById('pct-badge').innerText = pct + '%';
       document.getElementById('track-fill').style.width = pct + '%';
-      document.getElementById('left-label').innerText = left > 0 ? ('Осталось: ' + left + ' ' + declOfNum(left, ['книга', 'книги', 'книг'])) : '🎉 Цель на 2026 выполнена!';
+      document.getElementById('left-label').innerText = left > 0 ? ('Осталось: ' + left + ' ' + declOfNum(left, ['книга', 'книги', 'книг'])) : '🎉 Цель на '+booksYear+' выполнена!';
 
-      localStorage.setItem('books_read_2026', READ);
+      if(!booksKey)document.getElementById('left-label').textContent+=' · на этом устройстве';
     }
 
     function changeRead(delta) {
       READ = Math.max(0, READ + delta);
+      try{localStorage.setItem('books_read_2026',READ);}catch{}
       updateChallenge();
     }
 
@@ -552,6 +571,16 @@
     // Initial render
     renderNote(getRandomNote());
     updateChallenge();
+    if(booksKey){
+      document.querySelectorAll('[onclick^="changeRead"]').forEach(b=>b.hidden=true);
+      document.getElementById('read-count').textContent='—';
+      document.getElementById('pct-badge').textContent='—';
+      document.getElementById('track-fill').style.width='0%';
+      document.getElementById('left-label').textContent='Загрузка';
+      document.getElementById('collection-total').textContent='';
+      refreshBooks();setInterval(refreshBooks,60000);
+      document.addEventListener('visibilitychange',refreshBooks);
+    }
   </script>
 </body>
 </html>
