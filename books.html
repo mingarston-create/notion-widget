@@ -19,8 +19,6 @@
       --accent-bg: #eff6ff;
       --accent-gold: #d97706;
       --accent-gold-bg: #fef3c7;
-      --success: #10b981;
-      --success-bg: #d1fae5;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -63,7 +61,7 @@
       border-radius: 18px;
       padding: 18px 24px;
       display: grid;
-      grid-template-columns: 1.15fr 1.8fr 0.95fr;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.8fr);
       gap: 22px;
       max-width: 1400px;
       margin: 0 auto;
@@ -184,8 +182,7 @@
     /* 2. INSIGHT POD (EXPANDED & CLICKABLE) */
     .insight-pod {
       border-left: 1px solid var(--divider);
-      border-right: 1px solid var(--divider);
-      padding: 0 20px;
+      padding-left: 20px;
     }
 
     .insight-card {
@@ -274,98 +271,6 @@
       transform: rotate(3deg);
     }
 
-    /* 3. TICKET POD (COMPACT WIDTH, TALLER HEIGHT) */
-    .ticket-pod {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .ticket-card {
-      background: var(--pill-bg);
-      border: 1px dashed var(--card-border);
-      border-radius: 12px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .ticket-num-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .ticket-num {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--text-main);
-      letter-spacing: 0.04em;
-    }
-
-    .ticket-barcode {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      height: 14px;
-      opacity: 0.35;
-    }
-
-    .bar {
-      height: 100%;
-      background: var(--text-main);
-    }
-
-    .copy-btn-large {
-      width: 100%;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 7px 12px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-main);
-      cursor: pointer;
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    .copy-btn-large:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      transform: translateY(-1px);
-    }
-
-    .copy-btn-large.copied {
-      background: var(--success-bg);
-      color: var(--success);
-      border-color: var(--success);
-    }
-
-    .ticket-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-
-    .mosru-link {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 700;
-    }
-
-    .mosru-link:hover {
-      text-decoration: underline;
-    }
-
     @media (max-width: 1020px) {
       .books-bar {
         grid-template-columns: 1fr;
@@ -374,10 +279,8 @@
       }
       .insight-pod {
         border-left: none;
-        border-right: none;
         border-top: 1px solid var(--divider);
-        border-bottom: 1px solid var(--divider);
-        padding: 14px 0;
+        padding: 14px 0 0;
       }
     }
   </style>
@@ -425,37 +328,6 @@
           <span class="open-note-badge">Открыть заметку ↗</span>
         </div>
       </a>
-    </div>
-
-    <!-- 3. LIBRARY TICKET (ЕЧБ) -->
-    <div class="pod ticket-pod">
-      <div>
-        <div class="pod-header">
-          <span class="pod-title">🎟️ Читательский билет</span>
-          <span style="font-size: 10px; color: var(--text-sub); font-weight: 600;">mos.ru</span>
-        </div>
-        <div class="ticket-card">
-          <div class="ticket-num-row">
-            <span class="ticket-num">999 000 165 8779</span>
-            <div class="ticket-barcode">
-              <div class="bar" style="width: 2px;"></div>
-              <div class="bar" style="width: 1px;"></div>
-              <div class="bar" style="width: 3px;"></div>
-              <div class="bar" style="width: 1px;"></div>
-              <div class="bar" style="width: 2px;"></div>
-              <div class="bar" style="width: 4px;"></div>
-              <div class="bar" style="width: 1px;"></div>
-            </div>
-          </div>
-          <button class="copy-btn-large" id="copy-btn" onclick="copyTicket()">
-            <span>📋</span> <span id="copy-btn-text">Скопировать номер</span>
-          </button>
-        </div>
-      </div>
-      <div class="ticket-footer">
-        <span style="font-weight: 600; color: var(--success);">● Действителен</span>
-        <a class="mosru-link" href="https://www.mos.ru/knigi/catalog/" target="_blank">Каталог библиотек ↗</a>
-      </div>
     </div>
 
   </div>
@@ -549,23 +421,6 @@
 
     function declOfNum(n, titles) {
       return titles[(n % 100 > 4 && n % 100 < 20) ? 2 : [2, 0, 1, 1, 1, 2][(n % 10 < 5) ? Math.abs(n) % 10 : 5]];
-    }
-
-    // 3. Copy Ticket
-    function copyTicket() {
-      const num = '9990001658779';
-      navigator.clipboard.writeText(num).then(() => {
-        const btn = document.getElementById('copy-btn');
-        const text = document.getElementById('copy-btn-text');
-        text.innerText = '✓ Скопировано в буфер!';
-        btn.className = 'copy-btn-large copied';
-        setTimeout(() => {
-          text.innerText = 'Скопировать номер';
-          btn.className = 'copy-btn-large';
-        }, 2200);
-      }).catch(() => {
-        prompt('Номер билета:', num);
-      });
     }
 
     // Initial render
