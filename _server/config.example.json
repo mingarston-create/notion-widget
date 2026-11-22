@@ -2,6 +2,7 @@
   "notion_token": "",
   "api_key": "",
   "donation_api_key": "",
+  "tracker_timezone": "Europe/Moscow",
   "databases": {
     "habits_catalog": "",
     "habits_log": "",

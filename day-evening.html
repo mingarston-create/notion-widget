@@ -2,7 +2,6 @@
   <article class="notion-preview" lang="ru" aria-label="Трекер привычек">
     <header class="page-header">
       <span id="sync-status" class="sync-dot" role="status" aria-label="Загрузка"></span>
-      <button id="clock-settings" hidden type="button" aria-label="Настройки основного телефона">⚙</button>
     </header>
 
     <div class="daylight-hero">
@@ -2722,7 +2721,6 @@ html,body{margin:0;padding:0;background:transparent;font-family:-apple-system,Bl
 #daylight-notion-demo .sync-dot[data-state="ok"]{background:#99bf9c}
 #daylight-notion-demo .sync-dot[data-state="pending"]{background:#dec48b}
 #daylight-notion-demo .sync-dot[data-state="error"]{background:#ce9292}
-#daylight-notion-demo #clock-settings{border:0;background:transparent;color:inherit;font-size:18px;pointer-events:auto}
 #daylight-notion-demo .habit-card.completed{background:light-dark(#d1fae5,#193e32);border-color:#34d399}
 #daylight-notion-demo .habit-card:disabled{opacity:.65;cursor:default}
 #daylight-notion-demo .habit-card[aria-busy="true"]{cursor:wait}
@@ -2730,7 +2728,7 @@ html,body{margin:0;padding:0;background:transparent;font-family:-apple-system,Bl
 </style>
 <script src="habits-metrics.js?v=widgets-v2"></script>
 <script src="widget-config.js?v=tunnel-v2"></script>
-<script src="habits-sync.js?v=tunnel-v2"></script>
+<script src="habits-sync.js?v=server-clock-1"></script>
 <script>(()=>{
     let current=null, busy=new Set();
     const status=document.getElementById('sync-status');

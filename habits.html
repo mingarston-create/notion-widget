@@ -372,10 +372,6 @@
       .all-done-title { font-size: 13.5px; }
       .all-done-sub { font-size: 11px; }
     }
-    .settings-btn { appearance:none; border:0; background:transparent; color:var(--text-sub); font:20px/1 system-ui; width:28px; height:24px; padding:0; cursor:pointer; border-radius:6px; }
-    .settings-btn:hover { background:var(--pill-bg); }
-    .settings-btn:focus-visible { outline:2px solid var(--blue); }
-    .settings-btn:disabled { opacity:.45; cursor:default; }
     .title-wrap { gap:6px; }
     .title-wrap .sync-dot { margin-left:2px; }
     .done-check { position:absolute; right:12px; top:10px; color:var(--green); font-weight:700; }
@@ -386,7 +382,7 @@
     <div class="content-wrap">
       <header class="heading">
         <div class="title-wrap">
-          <h1>🌱 Привычки</h1><button id="clock-settings" hidden type="button" class="settings-btn" aria-label="Настройки основного телефона" title="Настройки основного телефона">⚙</button><span id="sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span>
+          <h1>🌱 Привычки</h1><span id="sync-status" class="sync-dot" role="status" tabindex="0" aria-label="Загрузка"></span>
           
         </div>
       </header>
@@ -407,7 +403,7 @@
 
   <script src="habits-metrics.js?v=monthly-v1"></script>
   <script src="widget-config.js?v=tunnel-v2"></script>
-  <script src="habits-sync.js?v=tunnel-v2"></script>
+  <script src="habits-sync.js?v=server-clock-1"></script>
   <script>
     let current=null, busy=new Set();
     const status=document.getElementById('sync-status');
