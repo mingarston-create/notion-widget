@@ -3,7 +3,6 @@ const routes = new Map([
   ['/health', 'GET'],
   ['/api/habits/status', 'GET'],
   ['/api/habits/events', 'POST'],
-  ['/api/habits/settings/timezone', 'POST'],
   ['/api/tasks/status', 'GET'],
   ['/api/donation/status', 'GET'],
 ]);

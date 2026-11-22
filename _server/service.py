@@ -12,7 +12,7 @@ import time
 import urllib.request
 import urllib.error
 from pathlib import Path
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 
 DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 ORIGIN = 'https://mingarston-create.github.io'
@@ -43,8 +43,6 @@ def streaks(history, day):
         current += 1
         date -= dt.timedelta(days=1)
     return current, best
-
-class ClockConflict(ValueError):pass
 
 class ClosingConnection(sqlite3.Connection):
     def __exit__(self, *args):
@@ -95,28 +93,31 @@ class Store:
             return value
     def day(self):
         return today(self.clock()['timezone'])
-    def update_clock(self, data):
-        device=data.get('device_id');zone=data.get('timezone')
-        if data.get('device_kind')!='phone':raise ValueError('Only the primary phone can set the tracker timezone')
-        if not isinstance(device,str) or not 16<=len(device)<=100:raise ValueError('Invalid device ID')
-        try:ZoneInfo(zone)
-        except (ZoneInfoNotFoundError,TypeError,ValueError):raise ValueError('Invalid timezone')
+    def configure_clock(self, configured_zone):
+        """Freeze the existing workspace zone unless an administrator selects one."""
         with self.connect() as c:
             c.execute('BEGIN IMMEDIATE')
-            row=c.execute('SELECT value FROM meta WHERE key="clock"').fetchone()
-            old=json.loads(row[0]) if row else {'timezone':'Europe/Moscow','cutoff_hour':3,'revision':1,'primary_device':None}
-            if old['primary_device']==device and old['timezone']==zone:return old
-            if data.get('expected_revision')!=old['revision']:raise ClockConflict('Settings changed; refresh and confirm again')
-            if old['primary_device'] not in (None,device) and data.get('replace_phone') is not True:raise ClockConflict('Another phone is already primary')
-            new={'timezone':zone,'cutoff_hour':3,'revision':old['revision']+1,'primary_device':device,'updated_at':utc_now().isoformat()}
-            history_row=c.execute('SELECT value FROM meta WHERE key="clock_history"').fetchone()
-            history=json.loads(history_row[0]) if history_row else {'1':{'timezone':'Europe/Moscow','cutoff_hour':3}}
-            history[str(new['revision'])]={'timezone':zone,'cutoff_hour':3}
-            for key,value in [('clock',new),('clock_history',history)]:c.execute('INSERT OR REPLACE INTO meta VALUES (?,?)',(key,json.dumps(value)))
-            # Only presentation/sync versions change. No date or completion moves.
-            c.execute('UPDATE days SET version=version+1 WHERE date IN (?,?)',(today(old['timezone']),today(zone)))
-        self.clock()
-        return new
+            row = c.execute("SELECT value FROM meta WHERE key='clock'").fetchone()
+            old = json.loads(row[0]) if row else {
+                'timezone': 'Europe/Moscow', 'cutoff_hour': 3, 'revision': 1,
+            }
+            zone = old['timezone'] if configured_zone is None else configured_zone
+            ZoneInfo(zone)  # Fail startup on an invalid setting before changing the journal.
+            changed = zone != old['timezone']
+            if row and not changed and 'primary_device' not in old:
+                return
+            revision = old['revision'] + int(changed)
+            settings = {'timezone': zone, 'cutoff_hour': 3, 'revision': revision}
+            row = c.execute("SELECT value FROM meta WHERE key='clock_history'").fetchone()
+            history = json.loads(row[0]) if row else {}
+            history.setdefault(str(old['revision']), {'timezone': old['timezone'], 'cutoff_hour': 3})
+            history[str(revision)] = {'timezone': zone, 'cutoff_hour': 3}
+            c.executemany('INSERT OR REPLACE INTO meta VALUES (?, ?)', [
+                ('clock', json.dumps(settings)), ('clock_history', json.dumps(history)),
+            ])
+            if changed:
+                c.execute('UPDATE days SET version=version+1 WHERE date IN (?, ?)',
+                          (today(old['timezone']), today(zone)))
 
     def catalog(self, active=False):
         with self.connect() as c:
@@ -401,14 +402,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.reply(200,self.server.store.snapshot())
     def do_POST(self):
         if not self.authorized(self.server.api_key):return
-        if self.path.split('?')[0] not in ['/api/habits/events','/api/habits/toggle','/api/habits/settings/timezone']:self.reply(404,{'error':'Not found'});return
+        if self.path.split('?')[0] not in ['/api/habits/events','/api/habits/toggle']:self.reply(404,{'error':'Not found'});return
         try:
             length=int(self.headers.get('Content-Length','0'))
             if not 0<length<=8192:raise ValueError('Invalid request size')
             data=json.loads(self.rfile.read(length))
-            result={'ok':True,'clock':self.server.store.update_clock(data)} if self.path.split('?')[0]=='/api/habits/settings/timezone' else self.server.store.accept(data)
+            result=self.server.store.accept(data)
             self.server.worker.wake.set();self.reply(202,result)
-        except ClockConflict as error:self.reply(409,{'error':str(error)})
         except (ValueError,TypeError) as error:self.reply(400,{'error':str(error)})
         except Exception:self.reply(503,{'error':'Запись не подтверждена. Повторите отправку.'})
 
@@ -426,6 +426,7 @@ def main():
         os.environ.get('HABITS_DB', '/var/lib/notion-habits/journal.sqlite3'),
         config.get('legacy_habit_aliases'),
     )
+    store.configure_clock(config.get('tracker_timezone'))
     store.clock()
     notion = Notion(config['notion_token'], databases)
     server = http.server.ThreadingHTTPServer(('127.0.0.1', int(os.environ.get('HABITS_PORT', '8080'))), Handler)
